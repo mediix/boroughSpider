@@ -5,14 +5,14 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/items.html
 
-from Scrapy.item import Item, Field
+from scrapy.item import Item, Field
 
 
 class ApplicationItem(Item):
     # define the fields for your item here like:
-    # define the fields for your item here like:
     borough = Field()
     domain = Field()
+    #
     case_reference = Field()
     address = Field()
     ward = Field()

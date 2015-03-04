@@ -15,7 +15,7 @@ NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'boroughSpider (+http://www.yourdomain.com)'
-
+'''
 EXPORT_FIELDS = [
     'borough',
     'domain',
@@ -47,16 +47,17 @@ EXPORT_FIELDS = [
     'planning_case_officer',
     'planning_team'
 ]
-
-ITEM_PIPELINES = {
-    'boroughSpider.pipelines.BoroughspiderPipeline': 100
-}
-
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = 'itempider (+http://www.yourdomain.com)'
 FEED_URI = 'report.csv'
 FEED_FORMAT = 'csv'
 
 FEED_EXPORTERS = {
     'csv': 'boroughSpider.feedexport.CSVkwItemExporter'
+}
+'''
+
+# Crawl responsibly by identifying yourself (and your website) on the user-agent
+# USER_AGENT = 'itempider (+http://www.yourdomain.com)'
+
+ITEM_PIPELINES = {
+    'boroughSpider.pipelines.BoroughspiderPipeline': 100
 }
