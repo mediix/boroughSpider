@@ -13,6 +13,8 @@ BOT_NAME = 'boroughSpider'
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
+DOWNLOAD_DELAY = 1.00
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'boroughSpider (+http://www.yourdomain.com)'
 '''
