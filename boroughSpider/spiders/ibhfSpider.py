@@ -2,6 +2,7 @@ from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request,FormRequest
 from scrapy.exceptions import CloseSpider
+from scrapy.http.cookies import CookieJar
 from boroughSpider.items import ApplicationItem
 from scrapy import log
 import csv, urllib, re, time, sys
@@ -11,9 +12,6 @@ today = time.strftime("%x %X")
 class ibhfSpider(Spider):
   name = 'ibhfSpider'
   domain = 'http://ibhf.gov.uk'
-
-  item = []
-  items = {}
 
   base_url = ["http://public-access.lbhf.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
               "http://public-access.lbhf.gov.uk"]
@@ -34,40 +32,61 @@ class ibhfSpider(Spider):
     num_of_pages = int(num_of_pages.split()[1])
     num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
     #
-    for page_num in range(1, num_of_pages+1):
+    for page_num in xrange(1, num_of_pages+1):
       page_url = '{0}{1}'.format(self.base_url[0], num_of_pages)
       yield FormRequest(page_url, method="GET", callback = self.parse_items)
 
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
       item_url = '{0}{1}'.format(self.base_url[1], url)
-      yield FormRequest(item_url, method="GET", callback = self.parse_summary_result)
+      yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
-  def parse_summary_result(self, response):
+  def parse_summary(self, response):
     # inspect_response(response)
-    self.item += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
-    self.item = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in self.item]
+    item = ApplicationItem()
 
-    # import ipdb as d; d.set_trace()
+    td = []
+    td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
-    # for it in xrange(self.item):
-    #   group = self.items.setdefault(item[item], [])
-    #   try:
-    #     group.append(item[1]) or "N/A"
-    #   try:
-    #     group.append(item[2]) or "N/A"
+    item['case_reference'] = td[0]
+    item['address'] = td[4]
+    item['application_status'] = td[6]
+    item['decision'] = td[7]
+    item['appeal_decision'] = td[9]
 
-    # import ipdb as d; d.set_trace()
-
-    detail_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
-    detail_url = '{0}{1}'.format(self.base_url[1], detail_url)
-    request = FormRequest(detail_url, method = "GET", callback = self.parse_detail_result)
-    request.meta['item_content'] = self.item
+    further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
+    further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
+    request = FormRequest(further_info_url, method = "GET",
+                          meta = {'item':item},
+                         callback = self.parse_further_info)
     return request
 
-  def parse_detail_result(self, response):
+  def parse_further_info(self, response):
     inspect_response(response)
+    
+    item = response.meta['item']
 
+    td = []
+    td += response.xpath("//table[@id='applicationDetails']//tr/td/text()").extract()
+    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
+    #item [''] = td
 
-  # def parse_date_result(self, response):
+    important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
+    important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
+    request = FormRequest(important_dates_url, method = "GET",
+                          meta = {'item':item},
+                         callback = self.parse_important_dates)
+    return request
+
+  def parse_important_dates(self, response):
+    # inspect_response(response)
+    
+    constraint_url = response.xpath("//*[@id='tab_constraints']/@href").extract()
+    constraint_url = '{0}{1}'.format(self.base_url[1], constraint_url)
+    request = FormRequest(constraint_url, method = "GET", callback = self.parse_constraints)
+    return request
+
+  def parse_constraints(self, response):
+    inspect_response(response)
