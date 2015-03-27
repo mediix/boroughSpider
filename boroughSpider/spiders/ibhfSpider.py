@@ -4,7 +4,7 @@ from scrapy.http import Request,FormRequest
 from scrapy.exceptions import CloseSpider
 from boroughSpider.items import ApplicationItem
 from scrapy import log
-import csv, urllib, re, time, sys
+import urllib, re, time
 
 today = time.strftime("%x %X")
 
@@ -49,9 +49,14 @@ class ibhfSpider(Spider):
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
     item['case_reference'] = td[0]
+    item['planning_portal_reference'] = td[1]
+    item['application_registration'] = td[2]
+    item['application_validation'] = td[3]
     item['address'] = td[4]
+    item['proposed_development'] = td[5]
     item['application_status'] = td[6]
     item['decision'] = td[7]
+    item['appeal_status'] = td[8]
     item['appeal_decision'] = td[9]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
@@ -62,15 +67,22 @@ class ibhfSpider(Spider):
     return request
 
   def parse_further_info(self, response):
-    # inspect_response(response)
-
+    #inspect_response(response)
     item = response.meta['item']
 
     td = []
     td += response.xpath("//table[@id='applicationDetails']//tr/td/text()").extract()
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
-    #item [''] = td
+    item['application_type'] = td[0]
+    item['expected_decision_level'] = td[1]
+    item['planning_case_officer'] = td[2]
+    item['ward'] = td[3]
+    item['applicants_name'] = td[4]
+    item['agent_name'] = td[5]
+    item['agency_company_name'] = td[6]
+    item['environmental_assessment_requested'] = td[7]
+
 
     important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
     important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
@@ -80,11 +92,24 @@ class ibhfSpider(Spider):
     return request
 
   def parse_important_dates(self, response):
-    # inspect_response(response)
+    #inspect_response(response)
+    item = response.meta['item']
+
+    td = []
+    td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+
+    item['closing_date_for_comments'] = td[1]
+    item['statutory_expiry_date'] = td[2]
+    item['agreed_expiry_date'] = td[3]
+    item['permission_expiry_date'] = td[5]
+    item['temporary_permission_expiry_date'] = td[6]
 
     constraint_url = response.xpath("//*[@id='tab_constraints']/@href").extract()
     constraint_url = '{0}{1}'.format(self.base_url[1], constraint_url)
-    request = FormRequest(constraint_url, method = "GET", callback = self.parse_constraints)
+    request = FormRequest(constraint_url, method = "GET",
+                          meta = {'item':item},
+                          callback = self.parse_constraints)
     return request
 
   def parse_constraints(self, response):
