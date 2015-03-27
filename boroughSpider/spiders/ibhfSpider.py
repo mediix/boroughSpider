@@ -2,7 +2,6 @@ from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request,FormRequest
 from scrapy.exceptions import CloseSpider
-from scrapy.http.cookies import CookieJar
 from boroughSpider.items import ApplicationItem
 from scrapy import log
 import csv, urllib, re, time, sys
@@ -59,12 +58,12 @@ class ibhfSpider(Spider):
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
     request = FormRequest(further_info_url, method = "GET",
                           meta = {'item':item},
-                         callback = self.parse_further_info)
+                          callback = self.parse_further_info)
     return request
 
   def parse_further_info(self, response):
-    inspect_response(response)
-    
+    # inspect_response(response)
+
     item = response.meta['item']
 
     td = []
@@ -77,12 +76,12 @@ class ibhfSpider(Spider):
     important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
     request = FormRequest(important_dates_url, method = "GET",
                           meta = {'item':item},
-                         callback = self.parse_important_dates)
+                          callback = self.parse_important_dates)
     return request
 
   def parse_important_dates(self, response):
     # inspect_response(response)
-    
+
     constraint_url = response.xpath("//*[@id='tab_constraints']/@href").extract()
     constraint_url = '{0}{1}'.format(self.base_url[1], constraint_url)
     request = FormRequest(constraint_url, method = "GET", callback = self.parse_constraints)
