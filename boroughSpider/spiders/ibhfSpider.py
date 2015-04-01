@@ -128,14 +128,12 @@ class ibhfSpider(Spider):
                             callback = self.parse_constraints)
       return request
     except:
-      item['borough'] = "Hammersmith & Fulham"
+      item['borough'] = "Hammersmith and Fulham"
       item['domain'] = self.domain
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       item['constraints'] = "n/a"
       item['documents_url'] = documents_url
-      item['borough'] = "Hammersmith & Fulham"
-      item['domain'] = self.domain
       item['polling_district'] = "n/a"
       item['listed_building_grade'] = "n/a"
       item['conservation_area'] = "n/a"
