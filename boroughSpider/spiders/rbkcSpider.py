@@ -72,7 +72,7 @@ class rkbcSpider(Spider):
 
 
         item["borough"] = "Royal Borough of Kensington and Chelsea"
-        item["domain"] = "rbkc.uk.gov"
+        item["domain"] = self.domain
 
         # Filling item fields
         try:
@@ -188,34 +188,3 @@ class rkbcSpider(Spider):
         item["documents_url"] = response.url + url[0]
 
         return item
-
-
-        '''
-        item["Case_reference"] = td[0] or "N/A"
-        item["Address"] = td[1] or "N/A"
-        item["Ward"] = td[2] or "N/A"
-        item["Polling_district"] = td[3] or "N/A"
-        item["Listed_building_grade"] = td[4] or "N/A"
-        item["Conservation_area"] = td[5] or "N/A"
-        item["Application_name"] = td[6] or "N/A"
-        item["Contact_name"] = td[7] or "N/A"
-        item["Contact_address"] = td[8] or "N/A"
-        item["Contact_telephone"] = td[9] or "N/A"
-        item["Application_type"] = td[10] or "N/A"
-        item["Proposed_development"] = td[11] or "N/A"
-        item["Date_received"] = td[12] or "N/A"
-        item["Registration_date"] = td[13] or "N/A"
-        item["Public_consultation_ends"] = td[14] or "N/A"
-        item["Application_status"] = td[15] or "N/A"
-        item["Target_date_for_decision"] = td[16] or "N/A"
-        item["Decision"] = td[17] or "N/A"
-        item["Decision_date"] = td[18] or "N/A"
-        item["Conditions_and_reasons"] = td[19] or "N/A"
-        item["formal_reference_number"] = td[20] or "N/A"
-        item["appeal_received"] = td[21] or "N/A"
-        item["appeal_start_date"] = td[22] or "N/A"
-        item["appeal_decision"] = td[23] or "N/A"
-        item["appeal_decision_date"] = td[24] or "N/A"
-        item["planning_case_office"] = td[25] or "N/A"
-        item["planning_team"] = td[26] or "N/A"
-        '''

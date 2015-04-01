@@ -12,7 +12,6 @@ class ApplicationItem(Item):
     # define the fields for your item here like:
     borough = Field()
     domain = Field()
-    #
     case_reference = Field()
     address = Field()
     ward = Field()
