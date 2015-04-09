@@ -4,7 +4,7 @@ from scrapy.http import Request,FormRequest
 from scrapy.exceptions import CloseSpider
 from boroughSpider.items import idoxpaItem
 from scrapy import log
-import urllib, re, time
+import urllib, re, time, json
 
 today = time.strftime("%x %X")
 
@@ -13,14 +13,14 @@ class idoxpaSpider(Spider):
 
   pipeline = 'idoxpaPipeline'
 
-  domain = 'https://www.westminster.gov.uk'
+  domain = 'www.westminster.gov.uk'
 
   base_url = ["http://idoxpa.westminster.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page="]
 
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def parse(self, response):
-    for parish in response.xpath("//*[@id='parish']/option/@value").extract():
+    for parish in response.xpath("//*[@id='parish']/option/@value").extract()[1:]:
       for month in response.xpath("//*[@id='month']/option/text()").extract():
         yield FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',

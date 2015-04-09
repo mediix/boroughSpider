@@ -11,6 +11,7 @@ today = time.strftime("%x %X")
 class ibhfSpider(Spider):
   name = 'ibhfSpider'
   domain = 'ibhf.gov.uk'
+  pipeline = 'ibhfSpiderPipeline'
 
   pipeline = 'ibhfPipeline'
 
