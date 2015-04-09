@@ -12,6 +12,8 @@ class rkbcSpider(Spider):
     name = 'rbkcSpider'
     domain = 'http://rbkc.gov.uk'
 
+    pipeline = 'rbkcPipeline'
+
     def __init__(self):
         self.allowed_domains = ["rbkc.gov.uk"]
         self.base_url = ["http://www.rbkc.gov.uk/planning/scripts/weeklyform.asp",
