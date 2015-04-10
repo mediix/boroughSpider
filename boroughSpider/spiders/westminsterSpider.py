@@ -1,7 +1,6 @@
 from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request,FormRequest
-from scrapy.exceptions import CloseSpider
 from boroughSpider.items import idoxpaItem
 from scrapy import log
 import urllib, re, time, json
@@ -15,7 +14,8 @@ class idoxpaSpider(Spider):
 
   domain = 'www.westminster.gov.uk'
 
-  base_url = ["http://idoxpa.westminster.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page="]
+  base_url = ["http://idoxpa.westminster.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
+              "http://idoxpa.westminster.gov.uk"]
 
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
@@ -31,7 +31,7 @@ class idoxpaSpider(Spider):
                           callback = self.parse_results)
 
   def parse_results(self, response):
-    inspect_response(response)
+    # inspect_response(response)
     try:
       num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
                                     /text()[(preceding-sibling::strong)]").extract()[0]
@@ -52,4 +52,9 @@ class idoxpaSpider(Spider):
       yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
   def parse_summary(self, response):
-    inspect_response(response)
+    # inspect_response(response)
+    item = idoxpaItem()
+
+    td = []
+    td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
