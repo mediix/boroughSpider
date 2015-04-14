@@ -62,8 +62,7 @@ class idoxpaItem(Item):
     case_reference = Field()
     address = Field()
     ward = Field()
-    application_registration = Field()
-    application_validation = Field()
+    planning_case_officer = Field()
     proposed_development = Field()
     application_status = Field()
     decision = Field()
@@ -82,4 +81,5 @@ class idoxpaItem(Item):
     application_validated_date = Field()
     decision_date = Field()
     target_date = Field()
+    documents_url = Field()
     pass

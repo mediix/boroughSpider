@@ -56,5 +56,72 @@ class idoxpaSpider(Spider):
     item = idoxpaItem()
 
     td = []
+    # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='simpleDetailsTable']//tr/td")]
+    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+
+    item['case_reference'] = td[0]
+    item['application_received_date'] = td[2]
+    item['application_validation_date'] = td[3]
+    item['address']
+    item['proposed_development']
+    item['status']
+    item['decision']
+    item['appeal_status']
+    item['appeal_decision']
+
+    further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
+    further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
+    request = FormRequest(further_info_url, method = "GET",
+                          meta = {'item':item},
+                          callback = self.parse_further_info)
+    return request
+
+  def parse_further_info(self, response):
+    inspect_response(response)
+    item = response.meta['item']
+
+    td = []
+    #td += response.xpath("//table[@id='applicationDetails']//tr/td/text()").extract()
+    td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='applicationDetails']//tr/td")]
+    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+
+    item['application_type']
+    item['planning_case_officer']
+    item['amenity_society']
+    item['ward']
+    item['district_reference']
+    item['applicants_name']
+    item['agent_name']
+    item['agency_company_name']
+    item['agent_address']
+    item['environmental_assessment_requested']
+
+
+    important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
+    important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
+    request = FormRequest(important_dates_url, method = "GET",
+                          meta = {'item':item},
+                          callback = self.parse_important_dates)
+    return request
+
+  def parse_important_dates(self, response):
+    item = response.meta['item']
+
+    td = []
     td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+
+    item['application_received_date']
+    item['application_validated_date']
+    item['decision_date']
+    item['target_date']
+
+    try:
+      documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
+      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+      item['documents_url'] = documents_url
+    except:
+      item['documents_url'] = "N/A"
+
+    return item
