@@ -63,12 +63,12 @@ class idoxpaSpider(Spider):
     item['case_reference'] = td[0]
     item['application_received_date'] = td[2]
     item['application_validation_date'] = td[3]
-    item['address']
-    item['proposed_development']
-    item['status']
-    item['decision']
-    item['appeal_status']
-    item['appeal_decision']
+    item['address'] = td[4]
+    item['proposed_development'] = td[5]
+    item['status'] = td[6]
+    item['decision'] = td[7]
+    item['appeal_status'] = td[8]
+    item['appeal_decision'] = td[9]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
@@ -86,16 +86,16 @@ class idoxpaSpider(Spider):
     td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='applicationDetails']//tr/td")]
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
-    item['application_type']
-    item['planning_case_officer']
-    item['amenity_society']
-    item['ward']
-    item['district_reference']
-    item['applicants_name']
-    item['agent_name']
-    item['agency_company_name']
-    item['agent_address']
-    item['environmental_assessment_requested']
+    item['application_type'] = td[0]
+    item['planning_case_officer'] = td[2]
+    item['amenity_society'] = td[3]
+    item['ward'] = td[4]
+    item['district_reference'] = td[5]
+    item['applicants_name'] = td[6]
+    item['agent_name'] = td[7]
+    item['agency_company_name'] = td[8]
+    item['agent_address'] = td[9]
+    item['environmental_assessment_requested'] = td[10]
 
 
     important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
@@ -109,13 +109,14 @@ class idoxpaSpider(Spider):
     item = response.meta['item']
 
     td = []
-    td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='simpleDetailsTable']//tr/td")]
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
-    item['application_received_date']
-    item['application_validated_date']
-    item['decision_date']
-    item['target_date']
+    item['application_received_date'] = td[0]
+    item['application_validated_date'] = td[1]
+    item['decision_date'] = td[8]
+    item['target_date'] = td[10]
 
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
