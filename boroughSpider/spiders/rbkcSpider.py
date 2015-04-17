@@ -12,7 +12,7 @@ class rkbcSpider(Spider):
     name = 'rbkcSpider'
     domain = 'http://rbkc.gov.uk'
 
-    pipeline = 'rbkcPipeline'
+    pipeline = 'ibhfPipeline'
 
     def __init__(self):
         self.allowed_domains = ["rbkc.gov.uk"]

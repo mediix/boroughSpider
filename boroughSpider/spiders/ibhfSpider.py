@@ -129,6 +129,7 @@ class ibhfSpider(Spider):
                             meta = {'item':item},
                             callback = self.parse_constraints)
       return request
+
     except:
       item['borough'] = "Hammersmith and Fulham"
       item['domain'] = self.domain

@@ -12,7 +12,7 @@ class idoxpaSpider(Spider):
 
   pipeline = 'idoxpaPipeline'
 
-  domain = 'www.westminster.gov.uk'
+  domain = 'westminster.gov.uk'
 
   base_url = ["http://idoxpa.westminster.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
               "http://idoxpa.westminster.gov.uk"]
@@ -62,10 +62,10 @@ class idoxpaSpider(Spider):
 
     item['case_reference'] = td[0]
     item['application_received_date'] = td[2]
-    item['application_validation_date'] = td[3]
+    item['application_validated_date'] = td[3]
     item['address'] = td[4]
     item['proposed_development'] = td[5]
-    item['status'] = td[6]
+    item['application_status'] = td[6]
     item['decision'] = td[7]
     item['appeal_status'] = td[8]
     item['appeal_decision'] = td[9]
@@ -78,7 +78,7 @@ class idoxpaSpider(Spider):
     return request
 
   def parse_further_info(self, response):
-    inspect_response(response)
+    # inspect_response(response)
     item = response.meta['item']
 
     td = []
@@ -86,43 +86,28 @@ class idoxpaSpider(Spider):
     td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='applicationDetails']//tr/td")]
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
 
+    item['borough'] = "City of Westminster"
+    item['domain'] = self.domain
     item['application_type'] = td[0]
-    item['planning_case_officer'] = td[2]
-    item['amenity_society'] = td[3]
-    item['ward'] = td[4]
-    item['district_reference'] = td[5]
-    item['applicants_name'] = td[6]
-    item['agent_name'] = td[7]
-    item['agency_company_name'] = td[8]
-    item['agent_address'] = td[9]
-    item['environmental_assessment_requested'] = td[10]
-
-
-    important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
-    important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
-    request = FormRequest(important_dates_url, method = "GET",
-                          meta = {'item':item},
-                          callback = self.parse_important_dates)
-    return request
-
-  def parse_important_dates(self, response):
-    item = response.meta['item']
-
-    td = []
-    # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
-    td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='simpleDetailsTable']//tr/td")]
-    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
-
-    item['application_received_date'] = td[0]
-    item['application_validated_date'] = td[1]
-    item['decision_date'] = td[8]
-    item['target_date'] = td[10]
+    item['planning_case_officer'] = td[4]
+    item['amenity_society'] = td[5]
+    item['ward'] = td[6]
+    item['district_reference'] = td[7]
+    item['applicants_name'] = td[8]
+    item['agent_name'] = td[9]
+    item['agency_company_name'] = td[10]
+    try:
+      item['agent_address'] = td[11]
+      item['environmental_assessment_requested'] = td[12]
+    except:
+      item['agent_address'] = "n/a"
+      item['environmental_assessment_requested'] = "n/a"
 
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       item['documents_url'] = documents_url
     except:
-      item['documents_url'] = "N/A"
+      item['documents_url'] = "n/a"
 
     return item

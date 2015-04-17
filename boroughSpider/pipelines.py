@@ -12,7 +12,7 @@ class BoroughspiderPipeline(object):
         self.cursor = self.conn.cursor()
 
     def process_item(self, item, spider):
-        if 'ibhfPipeline' or 'rbkcPipeline' in getattr(spider, 'pipeline', []):
+        if 'ibhfPipeline' in getattr(spider, 'pipeline', []):
             try:
                 self.cursor.execute("""INSERT INTO research_uk_boroughs
                 (borough,
@@ -39,7 +39,7 @@ class BoroughspiderPipeline(object):
                 conditions_and_reasons,
                 formal_reference_number,
                 appeal_received,
-                appeal_start_date,~
+                appeal_start_date,
                 appeal_decision,
                 appeal_decision_date,
                 planning_case_officer,
@@ -60,8 +60,8 @@ class BoroughspiderPipeline(object):
                 temporary_permission_expiry_date,
                 constraints,
                 date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
                 (item['borough'].encode('utf-8'),
                 item['domain'].encode('utf-8'),
                 item['case_reference'].encode('utf-8'),
@@ -136,25 +136,22 @@ class BoroughspiderPipeline(object):
                 environmental_assessment_requested,
                 application_received_date,
                 application_validated_date,
-                decision_date,
-                target_date,
-                date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+                documents_url,
+                date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
                 (item['borough'].encode('utf-8'),
                 item['domain'].encode('utf-8'),
                 item['case_reference'].encode('utf-8'),
-                item['application_received_date'].encode('utf-8'),
-                item['application_validation_date'].encode('utf-8'),
                 item['address'].encode('utf-8'),
-                item['proposed_development'].encode('utf-8'),
-                item['status'].encode('utf-8'),
-                item['decision'].encode('utf-8'),
-                item['appeal_status'].encode('utf-8'),
-                item['appeal_decision'].encode('utf-8'),
-                item['application_type'].encode('utf-8'),
-                item['planning_case_officer'].encode('utf-8'),
-                item['amenity_society'].encode('utf-8'),
                 item['ward'].encode('utf-8'),
+                item['planning_case_officer'].encode('utf-8'),
+                item['proposed_development'].encode('utf-8'),
+                item['application_status'].encode('utf-8'),
+                item['decision'].encode('utf-8'),
+                item['appeal_decision'].encode('utf-8'),
+                item['appeal_status'].encode('utf-8'),
+                item['application_type'].encode('utf-8'),
+                item['amenity_society'].encode('utf-8'),
                 item['district_reference'].encode('utf-8'),
                 item['applicants_name'].encode('utf-8'),
                 item['agent_name'].encode('utf-8'),
@@ -163,14 +160,8 @@ class BoroughspiderPipeline(object):
                 item['environmental_assessment_requested'].encode('utf-8'),
                 item['application_received_date'].encode('utf-8'),
                 item['application_validated_date'].encode('utf-8'),
-                item['decision_date'].encode('utf-8'),
-                item['target_date'].encode('utf-8'),
                 item['documents_url'].encode('utf-8')))
                 self.conn.commit()
             except MySQLdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
                 return item
-
-
-
-

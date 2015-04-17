@@ -79,7 +79,5 @@ class idoxpaItem(Item):
     environmental_assessment_requested = Field()
     application_received_date = Field()
     application_validated_date = Field()
-    decision_date = Field()
-    target_date = Field()
     documents_url = Field()
     pass
