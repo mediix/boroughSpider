@@ -1,16 +1,20 @@
 from scrapy.spider import Spider
 from scrapy.shell import inspect_response
-from scrapy.http import Request,FormRequest
+from scrapy.http import Request, FormRequest
 from boroughSpider.items import idoxpaItem
-from scrapy import log
 import urllib, re, time, json
+
+# from libextract import extract
+# from libextract.strategies import TABULAR
+# from libextract import prototypes
+# from libextract.tabular import parse_html
 
 today = time.strftime("%x %X")
 
 class idoxpaSpider(Spider):
   name = 'idoxpaSpider'
 
-  pipeline = 'idoxpaPipeline'
+  pipeline = 'westminsterPipeline'
 
   domain = 'westminster.gov.uk'
 
@@ -20,6 +24,7 @@ class idoxpaSpider(Spider):
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def parse(self, response):
+    inspect_response(response)
     for parish in response.xpath("//*[@id='parish']/option/@value").extract()[1:]:
       for month in response.xpath("//*[@id='month']/option/text()").extract():
         yield FormRequest.from_response(response,
@@ -59,6 +64,14 @@ class idoxpaSpider(Spider):
     # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
     td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='simpleDetailsTable']//tr/td")]
     td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+
+    # strat = (parse_html,)
+
+    # tab = extract(response.body, strategy=strat)
+    # table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    # table = {key.replace(' ', '_').lower(): value for key, value in table.items()}
+
+    import pdb; pdb.set_trace()
 
     item['case_reference'] = td[0]
     item['application_received_date'] = td[2]

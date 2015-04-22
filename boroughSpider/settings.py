@@ -61,5 +61,6 @@ FEED_EXPORTERS = {
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
 
 ITEM_PIPELINES = {
-    'boroughSpider.pipelines.BoroughspiderPipeline': 100
+    'boroughSpider.pipelines.BoroughspiderPipeline',
+    'boroughSpider.pipelines.westminsterPipeline',
 }

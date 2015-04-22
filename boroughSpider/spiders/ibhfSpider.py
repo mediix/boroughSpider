@@ -12,7 +12,7 @@ class ibhfSpider(Spider):
   name = 'ibhfSpider'
   domain = 'ibhf.gov.uk'
 
-  pipeline = 'ibhfPipeline'
+  pipeline = 'BoroughspiderPipeline'
 
   base_url = ["http://public-access.lbhf.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
               "http://public-access.lbhf.gov.uk"]
