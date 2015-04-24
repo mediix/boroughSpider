@@ -5,13 +5,15 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 from scrapy import log
-import MySQLdb, sys
+import MySQLdb
 import functools
+import sys
 
 def check_spider_pipeline(process_item_method):
 
     @functools.wraps(process_item_method)
     def wrapper(self, item, spider):
+        # import pdb; pdb.set_trace()
         msg = '%%s %s pipeline step' % (self.__class__.__name__)
         if self.__class__.__name__ == spider.pipeline:
             spider.log(msg % 'executing', level=log.DEBUG)
@@ -19,9 +21,11 @@ def check_spider_pipeline(process_item_method):
         else:
             spider.log(msg % 'skipping', level=log.DEBUG)
             return item
+
     return wrapper
 
-class BoroughspiderPipeline(object):
+class Boroughspider(object):
+
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='granville', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
@@ -126,13 +130,15 @@ class BoroughspiderPipeline(object):
             print "Error %d: %s" % (e.args[0], e.args[1])
             return item
 
-class westminsterPipeline(object):
+class Westminster(object):
+
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='granville', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
     def processs_item(self, item, spider):
+        import pdb; pdb.set_trace()
         try:
             self.cursor.execute("""INSERT INTO research_uk_boroughs
             (borough,
@@ -147,10 +153,10 @@ class westminsterPipeline(object):
             appeal_decision,
             appeal_status,
             application_type,
-            expected_decision_level,
             amenity_society,
             district_reference,
             applicatns_name,
+            contact_address,
             agent_name,
             agency_company_name,
             agent_address,
@@ -159,28 +165,29 @@ class westminsterPipeline(object):
             application_validated_date,
             documents_url,
             date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (item['borough'].encode('utf-8'),
             item['domain'].encode('utf-8'),
-            item['case_reference'].encode('utf-8'),
+            item['reference'].encode('utf-8'),
             item['address'].encode('utf-8'),
             item['ward'].encode('utf-8'),
             item['planning_case_officer'].encode('utf-8'),
-            item['proposed_development'].encode('utf-8'),
-            item['application_status'].encode('utf-8'),
+            item['proposal'].encode('utf-8'),
+            item['status'].encode('utf-8'),
             item['decision'].encode('utf-8'),
             item['appeal_decision'].encode('utf-8'),
             item['appeal_status'].encode('utf-8'),
             item['application_type'].encode('utf-8'),
             item['amenity_society'].encode('utf-8'),
             item['district_reference'].encode('utf-8'),
-            item['applicants_name'].encode('utf-8'),
-            item['agent_name'].encode('utf-8'),
-            item['agency_company_name'].encode('utf-8'),
+            item['applicant_name'].encode('utf-8'),
+            item['applicant_address'].encode('utf-8'),
+            item['case_officer'].encode('utf-8'),
+            item['agent_company_name'].encode('utf-8'),
             item['agent_address'].encode('utf-8'),
             item['environmental_assessment_requested'].encode('utf-8'),
-            item['application_received_date'].encode('utf-8'),
-            item['application_validated_date'].encode('utf-8'),
+            item['application_received'].encode('utf-8'),
+            item['application_validated'].encode('utf-8'),
             item['documents_url'].encode('utf-8')))
             self.conn.commit()
         except MySQLdb.Error, e:

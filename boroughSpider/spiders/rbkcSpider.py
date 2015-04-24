@@ -10,9 +10,10 @@ today = time.strftime("%x %X")
 
 class rkbcSpider(Spider):
     name = 'rbkcSpider'
+
     domain = 'http://rbkc.gov.uk'
 
-    pipeline = 'BoroughspiderPipeline'
+    pipeline = 'Boroughspider'
 
     def __init__(self):
         self.allowed_domains = ["rbkc.gov.uk"]

@@ -4,17 +4,15 @@ from scrapy.http import Request, FormRequest
 from boroughSpider.items import idoxpaItem
 import urllib, re, time, json
 
-# from libextract import extract
-# from libextract.strategies import TABULAR
-# from libextract import prototypes
-# from libextract.tabular import parse_html
+from libextract import extract, prototypes
+from libextract.tabular import parse_html
 
 today = time.strftime("%x %X")
 
 class idoxpaSpider(Spider):
   name = 'idoxpaSpider'
 
-  pipeline = 'westminsterPipeline'
+  pipeline = 'Westminster'
 
   domain = 'westminster.gov.uk'
 
@@ -24,7 +22,7 @@ class idoxpaSpider(Spider):
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def parse(self, response):
-    inspect_response(response)
+    # inspect_response(response)
     for parish in response.xpath("//*[@id='parish']/option/@value").extract()[1:]:
       for month in response.xpath("//*[@id='month']/option/text()").extract():
         yield FormRequest.from_response(response,
@@ -60,28 +58,21 @@ class idoxpaSpider(Spider):
     # inspect_response(response)
     item = idoxpaItem()
 
-    td = []
-    # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
-    td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='simpleDetailsTable']//tr/td")]
-    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+    strat = (parse_html,)
 
-    # strat = (parse_html,)
+    tab = extract(response.body, strategy=strat)
+    table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
 
-    # tab = extract(response.body, strategy=strat)
-    # table = list(prototypes.convert_table(tab.xpath("//table")))[0]
-    # table = {key.replace(' ', '_').lower(): value for key, value in table.items()}
+    # import pdb; pdb.set_trace()
 
-    import pdb; pdb.set_trace()
+    for key, value in table.items():
+      try:
+        if (kay == key for kay in item.fields.keys()):
+          item[key] = value
+      except:
+        pass
 
-    item['case_reference'] = td[0]
-    item['application_received_date'] = td[2]
-    item['application_validated_date'] = td[3]
-    item['address'] = td[4]
-    item['proposed_development'] = td[5]
-    item['application_status'] = td[6]
-    item['decision'] = td[7]
-    item['appeal_status'] = td[8]
-    item['appeal_decision'] = td[9]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
@@ -92,30 +83,25 @@ class idoxpaSpider(Spider):
 
   def parse_further_info(self, response):
     # inspect_response(response)
+
     item = response.meta['item']
 
-    td = []
-    #td += response.xpath("//table[@id='applicationDetails']//tr/td/text()").extract()
-    td = [''.join(text.xpath('.//text()').extract()) for text in response.xpath("//table[@id='applicationDetails']//tr/td")]
-    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+    strat = (parse_html,)
+
+    tab = extract(response.body, strategy=strat)
+    table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
+
+    for key, value in table.items():
+      try:
+        if (kay == key for kay in item.fields.keys()):
+          item[key] = value
+      except:
+        pass
+
 
     item['borough'] = "City of Westminster"
     item['domain'] = self.domain
-    item['application_type'] = td[0]
-    item['planning_case_officer'] = td[4]
-    item['amenity_society'] = td[5]
-    item['ward'] = td[6]
-    item['district_reference'] = td[7]
-    item['applicants_name'] = td[8]
-    item['agent_name'] = td[9]
-    item['agency_company_name'] = td[10]
-    try:
-      item['agent_address'] = td[11]
-      item['environmental_assessment_requested'] = td[12]
-    except:
-      item['agent_address'] = "n/a"
-      item['environmental_assessment_requested'] = "n/a"
-
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)

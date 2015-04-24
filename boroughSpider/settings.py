@@ -13,7 +13,7 @@ BOT_NAME = 'boroughSpider'
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
-DOWNLOAD_DELAY = 1.00
+# DOWNLOAD_DELAY = 1.00
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'boroughSpider (+http://www.yourdomain.com)'
@@ -61,6 +61,11 @@ FEED_EXPORTERS = {
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
 
 ITEM_PIPELINES = {
-    'boroughSpider.pipelines.BoroughspiderPipeline',
-    'boroughSpider.pipelines.westminsterPipeline',
+    'boroughSpider.pipelines.Boroughspider': 200,
+    'boroughSpider.pipelines.Westminster': 100,
+}
+
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+    'boroughSpider.middlewares.ProxyMiddleware': 100,
 }
