@@ -61,8 +61,8 @@ FEED_EXPORTERS = {
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
 
 ITEM_PIPELINES = {
-    'boroughSpider.pipelines.Boroughspider': 200,
-    'boroughSpider.pipelines.Westminster': 100,
+    'boroughSpider.pipelines.Westminster',
+    'boroughSpider.pipelines.Boroughspider',
 }
 
 DOWNLOADER_MIDDLEWARES = {

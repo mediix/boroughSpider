@@ -21,7 +21,6 @@ def check_spider_pipeline(process_item_method):
         else:
             spider.log(msg % 'skipping', level=log.DEBUG)
             return item
-
     return wrapper
 
 class Boroughspider(object):
@@ -137,8 +136,7 @@ class Westminster(object):
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
-    def processs_item(self, item, spider):
-        import pdb; pdb.set_trace()
+    def process_item(self, item, spider):
         try:
             self.cursor.execute("""INSERT INTO research_uk_boroughs
             (borough,
@@ -165,7 +163,7 @@ class Westminster(object):
             application_validated_date,
             documents_url,
             date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (item['borough'].encode('utf-8'),
             item['domain'].encode('utf-8'),
             item['reference'].encode('utf-8'),
