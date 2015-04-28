@@ -58,21 +58,24 @@ class idoxpaSpider(Spider):
     # inspect_response(response)
     item = idoxpaItem()
 
+    for key in item.fields.keys():
+      item[key] = ''
+
     strat = (parse_html,)
 
     tab = extract(response.body, strategy=strat)
     table = list(prototypes.convert_table(tab.xpath("//table")))[0]
     table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
 
-    # import pdb; pdb.set_trace()
-
     for key, value in table.items():
       try:
         if (kay == key for kay in item.fields.keys()):
           item[key] = value
       except:
+        # item[kay] = "n/a"
         pass
 
+    # import pdb; pdb.set_trace()
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
@@ -97,8 +100,10 @@ class idoxpaSpider(Spider):
         if (kay == key for kay in item.fields.keys()):
           item[key] = value
       except:
+        # item[kay] = "n/a"
         pass
 
+    # import pdb; pdb.set_trace()
 
     item['borough'] = "City of Westminster"
     item['domain'] = self.domain

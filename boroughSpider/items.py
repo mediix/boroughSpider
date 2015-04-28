@@ -63,7 +63,7 @@ class idoxpaItem(Item):
     alternative_reference = Field()
     address = Field()
     ward = Field()
-    planning_case_officer = Field()
+    case_officer = Field()
     proposal = Field()
     status = Field()
     decision = Field()
