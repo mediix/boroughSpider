@@ -191,3 +191,67 @@ class Westminster(object):
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             return item
+
+
+class CityOfLondon(object):
+
+    def __init__(self):
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='granville', host='granweb01', charset="utf8", use_unicode=True)
+        self.cursor = self.conn.cursor()
+
+    @check_spider_pipeline
+    def process_item(self, item, spider):
+        try:
+            self.cursor.execute("""INSERT INTO research_uk_boroughs
+            (borough,
+            domain,
+            case_reference,
+            address,
+            ward,
+            planning_case_officer,
+            proposed_development,
+            application_status,
+            decision,
+            appeal_decision,
+            appeal_status,
+            application_type,
+            amenity_society,
+            district_reference,
+            applicants_name,
+            contact_address,
+            agent_name,
+            agency_company_name,
+            agent_address,
+            environmental_assessment_requested,
+            application_received_date,
+            application_validated_date,
+            documents_url,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+            (item['borough'].encode('utf-8'),
+            item['domain'].encode('utf-8'),
+            item['reference'].encode('utf-8'),
+            item['address'].encode('utf-8'),
+            item['ward'].encode('utf-8'),
+            item['case_officer'].encode('utf-8'),
+            item['proposal'].encode('utf-8'),
+            item['status'].encode('utf-8'),
+            item['decision'].encode('utf-8'),
+            item['appeal_decision'].encode('utf-8'),
+            item['appeal_status'].encode('utf-8'),
+            item['application_type'].encode('utf-8'),
+            item['amenity_society'].encode('utf-8'),
+            item['district_reference'].encode('utf-8'),
+            item['applicant_name'].encode('utf-8'),
+            item['applicant_address'].encode('utf-8'),
+            item['case_officer'].encode('utf-8'),
+            item['agent_company_name'].encode('utf-8'),
+            item['agent_address'].encode('utf-8'),
+            item['environmental_assessment_requested'].encode('utf-8'),
+            item['application_received'].encode('utf-8'),
+            item['application_validated'].encode('utf-8'),
+            item['documents_url'].encode('utf-8')))
+            self.conn.commit()
+        except MySQLdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            return item

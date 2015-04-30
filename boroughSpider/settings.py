@@ -7,16 +7,30 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
-
 BOT_NAME = 'boroughSpider'
 
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
-# DOWNLOAD_DELAY = 1.00
+DOWNLOAD_DELAY = 1.50
+
+COOKIES_ENABLED = True
+COOKIES_DEBUG = True
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'boroughSpider (+http://www.yourdomain.com)'
+# USER_AGENT = 'itempider (+http://www.yourdomain.com)'
+
+ITEM_PIPELINES = {
+    'boroughSpider.pipelines.Westminster',
+    'boroughSpider.pipelines.Boroughspider',
+}
+
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+    'boroughSpider.middlewares.ProxyMiddleware': 100,
+}
+
+##############################################################################
 '''
 EXPORT_FIELDS = [
     'borough',
@@ -56,16 +70,3 @@ FEED_EXPORTERS = {
     'csv': 'boroughSpider.feedexport.CSVkwItemExporter'
 }
 '''
-
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = 'itempider (+http://www.yourdomain.com)'
-
-ITEM_PIPELINES = {
-    'boroughSpider.pipelines.Westminster',
-    'boroughSpider.pipelines.Boroughspider',
-}
-
-DOWNLOADER_MIDDLEWARES = {
-    'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
-    'boroughSpider.middlewares.ProxyMiddleware': 100,
-}
