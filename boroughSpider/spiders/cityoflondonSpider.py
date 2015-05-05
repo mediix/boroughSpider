@@ -46,7 +46,7 @@ def parse_first_page(self, response):
         if class="showing" visible in response: # pages of applications
             num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
                                     /text()[(preceding-sibling::strong)]").extract()[0]
-            num_of_pages = int(num_of_pages.split()[1]) 
+            num_of_pages = int(num_of_pages.split()[1])
             num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
             #
             for page_num in xrange(1, num_of_pages+1):
