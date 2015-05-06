@@ -5,6 +5,7 @@ from boroughSpider.items import idoxpaItem
 
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
+from dateutil import parser
 
 import time
 
@@ -28,27 +29,37 @@ class idoxpaSpider(Spider):
       for month in response.xpath("//*[@id='month']/option/text()").extract():
         yield FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
-                          formdata = { 'searchCriteria.parish':parish,
-                                       'month':month,
+                          formdata = { 'searchCriteria.parish':str(parish),
+                                       'month':str(month),
                                        'dateType':'DC_Validated',
                                        'searchType':'Application' },
                           callback = self.parse_results)
 
   def parse_results(self, response):
     # inspect_response(response)
-    try:
-      num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-                                    /text()[(preceding-sibling::strong)]").extract()[0]
-      num_of_pages = int(num_of_pages.split()[1])
-      num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
-      #
-      for page_num in xrange(1, num_of_pages+1):
-        page_url = '{0}{1}'.format(self.base_url[0], page_num)
+    if response.xpath("//p[@class='pager top']/span[@class='showing']"):
+      pages = response.xpath("//*[@id='searchResultsContainer']/p[@class='pager top']/a/@href").extract()
+      for page in xrange(1, len(pages)+1):
+        page_url = '{0}{1}'.format(self.base_url[0], page)
         yield FormRequest(page_url, method="GET", callback = self.parse_items)
-    except:
+    else:
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
         item_url = '{0}{1}'.format(self.base_url[1], url)
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+
+    # try:
+    #   num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
+    #                                 /text()[(preceding-sibling::strong)]").extract()[0]
+    #   num_of_pages = int(num_of_pages.split()[1])
+    #   num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
+    #   #
+    #   for page_num in xrange(1, num_of_pages+1):
+    #     page_url = '{0}{1}'.format(self.base_url[0], page_num)
+    #     yield FormRequest(page_url, method="GET", callback = self.parse_items)
+    # except:
+    #   for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+    #     item_url = '{0}{1}'.format(self.base_url[1], url)
+    #     yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
@@ -70,13 +81,15 @@ class idoxpaSpider(Spider):
 
     for key, value in table.items():
       try:
-        if (kay == key for kay in item.fields.keys()):
+        if (kay == key for kay in item.fields.keys()) and value != '':
+          try:
+            item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+          except ValueError:
+            item[key] = value
+        else:
           item[key] = value
       except:
-        # item[kay] = "n/a"
         pass
-
-    # import pdb; pdb.set_trace()
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
@@ -87,7 +100,6 @@ class idoxpaSpider(Spider):
 
   def parse_further_info(self, response):
     # inspect_response(response)
-
     item = response.meta['item']
 
     strat = (parse_html,)
@@ -98,13 +110,15 @@ class idoxpaSpider(Spider):
 
     for key, value in table.items():
       try:
-        if (kay == key for kay in item.fields.keys()):
+        if (kay == key for kay in item.fields.keys()) and value != '':
+          try:
+            item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+          except ValueError:
+            item[key] = value
+        else:
           item[key] = value
       except:
-        # item[kay] = "n/a"
         pass
-
-    # import pdb; pdb.set_trace()
 
     item['borough'] = "City of Westminster"
     item['domain'] = self.domain

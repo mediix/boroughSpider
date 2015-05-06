@@ -24,7 +24,7 @@ class ibhfSpider(Spider):
     for month in response.xpath("//*[@id='month']/option/text()").extract():
       yield FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
-                        formdata = { 'month':month, 'dateType': 'DC_Validated', 'searchType':'Application' },
+                        formdata = { 'month':str(month), 'dateType': 'DC_Validated', 'searchType':'Application' },
                         callback = self.parse_results)
 
   def parse_results(self, response):
