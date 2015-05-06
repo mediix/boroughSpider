@@ -129,7 +129,7 @@ def parse_further_info(self, response):
 
   # import pdb; pdb.set_trace()
 
-  item['borough'] = "City of Westminster"
+  item['borough'] = 'City of London'
   item['domain'] = self.domain
   try:
     documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
