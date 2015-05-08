@@ -68,10 +68,7 @@ class cityOfLondonSpider(Spider):
     for key, value in table.items():
       try:
         if (kay == key for kay in item.fields.keys()) and value != '':
-          try:
-            item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
-          except ValueError:
-            item[key] = value
+          item[key] = parser.parse(str(value), fuzzy=True).strftime("%Y-%m-%d")
         else:
           item[key] = value
       except:
@@ -98,10 +95,7 @@ class cityOfLondonSpider(Spider):
     for key, value in table.items():
       try:
         if (kay == key for kay in item.fields.keys()) and value != '':
-          try:
-            item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
-          except ValueError:
-            item[key] = value
+          item[key] = parser.parse(str(value), fuzzy=True).strftime("%Y-%m-%d")
         else:
           item[key] = value
       except:
