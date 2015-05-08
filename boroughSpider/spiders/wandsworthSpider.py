@@ -29,4 +29,8 @@ class wandsworthSpider(Spider):
                                       callback = self.parse_search_result)]
 
   def parse_search_result(self, response):
-    inspect_response(response)
+    # inspect_response(response)
+    item = []
+    nxt = response.xpath("//a[@class='noborder']/@href").extract()[0]
+    while (nxt):
+      item += response.xpath()

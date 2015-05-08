@@ -23,7 +23,7 @@ COOKIES_DEBUG = True
 ITEM_PIPELINES = {
     'boroughSpider.pipelines.Westminster',
     'boroughSpider.pipelines.Boroughspider',
-    'boroughSpider.pipelines.CityOfLondon',
+    'boroughSpider.pipelines.CityOfLondon'
 }
 
 DOWNLOADER_MIDDLEWARES = {
