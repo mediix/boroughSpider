@@ -12,7 +12,7 @@ import time
 today = time.strftime("%x %X")
 
 class cityOfLondonSpider(Spider):
-  name = 'londoncitySpider'
+  name = 'londSpider'
 
   pipeline = 'CityOfLondon'
 

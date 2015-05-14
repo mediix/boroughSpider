@@ -1,7 +1,7 @@
 from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
-from boroughSpider.items import idoxpaItem
+from boroughSpider.items import westminsterItem
 
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
@@ -11,8 +11,8 @@ import time
 
 today = time.strftime("%x %X")
 
-class idoxpaSpider(Spider):
-  name = 'idoxpaSpider'
+class westminsterSpider(Spider):
+  name = 'westSpider'
 
   pipeline = 'Westminster'
 
@@ -47,20 +47,6 @@ class idoxpaSpider(Spider):
         item_url = '{0}{1}'.format(self.base_url[1], url)
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
-    # try:
-    #   num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-    #                                 /text()[(preceding-sibling::strong)]").extract()[0]
-    #   num_of_pages = int(num_of_pages.split()[1])
-    #   num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
-    #   #
-    #   for page_num in xrange(1, num_of_pages+1):
-    #     page_url = '{0}{1}'.format(self.base_url[0], page_num)
-    #     yield FormRequest(page_url, method="GET", callback = self.parse_items)
-    # except:
-    #   for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-    #     item_url = '{0}{1}'.format(self.base_url[1], url)
-    #     yield FormRequest(item_url, method="GET", callback = self.parse_summary)
-
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
       item_url = '{0}{1}'.format(self.base_url[1], url)
@@ -68,7 +54,7 @@ class idoxpaSpider(Spider):
 
   def parse_summary(self, response):
     # inspect_response(response)
-    item = idoxpaItem()
+    item = westminsterItem()
 
     for key in item.fields.keys():
       item[key] = ''

@@ -22,7 +22,8 @@ COOKIES_DEBUG = True
 
 ITEM_PIPELINES = {
     'boroughSpider.pipelines.Westminster',
-    'boroughSpider.pipelines.Boroughspider',
+    'boroughSpider.pipelines.Hammersmith',
+    'boroughSpider.pipelines.Kensington',
     'boroughSpider.pipelines.CityOfLondon'
 }
 
