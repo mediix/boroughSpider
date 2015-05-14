@@ -32,7 +32,7 @@ class Boroughspider(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO research_uk_boroughs
+            self.cursor.execute("""INSERT INTO boroughs
             (borough,
             domain,
             case_reference,
@@ -138,7 +138,7 @@ class Westminster(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO research_uk_boroughs
+            self.cursor.execute("""INSERT INTO boroughs
             (borough,
             domain,
             case_reference,
@@ -202,7 +202,7 @@ class CityOfLondon(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO research_uk_boroughs
+            self.cursor.execute("""INSERT INTO boroughs
             (borough,
             domain,
             case_reference,
