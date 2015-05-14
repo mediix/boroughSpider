@@ -24,7 +24,6 @@ class cityOfLondonSpider(Spider):
   start_urls = ["http://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def parse(self, response):
-<<<<<<< Updated upstream
     for month in response.xpath("//*[@id='month']/option/text()").extract():
       yield FormRequest.from_response(response,
                         formname =   'searchCriteriaForm',
