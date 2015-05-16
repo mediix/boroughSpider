@@ -1,10 +1,13 @@
 from scrapy.spider import Spider
 from scrapy.shell import inspect_response
-from scrapy.http import Request,FormRequest
-from scrapy.exceptions import CloseSpider
+from scrapy.http import Request, FormRequest
 from boroughSpider.items import hammersmithItem
-from scrapy import log
-import urllib, re, time, json
+
+from libextract import extract, prototypes
+from libextract.tabular import parse_html
+from dateutil import parser
+
+import time
 
 today = time.strftime("%x %X")
 
@@ -51,20 +54,38 @@ class hammSpider(Spider):
     # inspect_response(response)
     item = hammersmithItem()
 
-    td = []
-    td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
-    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+    for key in item.fields.keys():
+      item[key] = ''
 
-    item['case_reference'] = td[0]
-    item['planning_portal_reference'] = td[1]
-    item['application_registration'] = td[2]
-    item['application_validation'] = td[3]
-    item['address'] = td[4]
-    item['proposed_development'] = td[5]
-    item['application_status'] = td[6]
-    item['decision'] = td[7]
-    item['appeal_status'] = td[8]
-    item['appeal_decision'] = td[9]
+    strat = (parse_html,)
+
+    tab = extract(response.body, strategy=strat)
+    table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
+
+    for key, value in table.items():
+      try:
+        if (kay == key for kay in item.fields.keys()) and value != '':
+          item[key] = parser.parse(str(value), fuzzy=True).strftime("%Y-%m-%d")
+        else:
+          item[key] = value
+      except:
+        pass
+
+    # td = []
+    # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
+    # td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+
+    # item['case_reference'] = td[0]
+    # item['planning_portal_reference'] = td[1]
+    # item['application_registration'] = td[2]
+    # item['application_validation'] = td[3]
+    # item['address'] = td[4]
+    # item['proposed_development'] = td[5]
+    # item['application_status'] = td[6]
+    # item['decision'] = td[7]
+    # item['appeal_status'] = td[8]
+    # item['appeal_decision'] = td[9]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
@@ -74,7 +95,7 @@ class hammSpider(Spider):
     return request
 
   def parse_further_info(self, response):
-    #inspect_response(response)
+    inspect_response(response)
     item = response.meta['item']
 
     td = []
