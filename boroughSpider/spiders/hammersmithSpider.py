@@ -1,13 +1,13 @@
 from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
-from boroughSpider.items import hammersmithItem
-
+from scrapy.item import DictItem, Field
+#
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
-
-import time
+#
+import time, json
 
 today = time.strftime("%x %X")
 
@@ -23,12 +23,25 @@ class hammSpider(Spider):
 
   start_urls = ["http://public-access.lbhf.gov.uk/online-applications/search.do?action=monthlyList"]
 
+  def create_item_class(self, class_name, field_list):
+    fields = {}
+    for field_name in field_list:
+      fields[field_name] = Field()
+
+    fields.update({'domain': Field()})
+    fields.update({'borough': Field()})
+    fields.update({'constraints': Field()})
+    fields.update({'documents_url': Field()})
+    return type(class_name, (DictItem,), {'fields':fields})
+
   def parse(self, response):
-    for month in response.xpath("//*[@id='month']/option/text()").extract():
-      yield FormRequest.from_response(response,
+    # for month in response.xpath("//*[@id='month']/option/text()").extract():
+    return [FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
-                        formdata = { 'month':str(month), 'dateType': 'DC_Validated', 'searchType':'Application' },
-                        callback = self.parse_results)
+                        formdata = { 'month':'MAY 15',
+                                     'dateType': 'DC_Validated',
+                                     'searchType':'Application' },
+                        callback = self.parse_results)]
 
   def parse_results(self, response):
     try:
@@ -52,138 +65,80 @@ class hammSpider(Spider):
 
   def parse_summary(self, response):
     # inspect_response(response)
-    item = hammersmithItem()
-
-    for key in item.fields.keys():
-      item[key] = ''
 
     strat = (parse_html,)
 
     tab = extract(response.body, strategy=strat)
     table = list(prototypes.convert_table(tab.xpath("//table")))[0]
-    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
-
-    for key, value in table.items():
-      try:
-        if (kay == key for kay in item.fields.keys()) and value != '':
-          item[key] = parser.parse(str(value), fuzzy=True).strftime("%Y-%m-%d")
-        else:
-          item[key] = value
-      except:
-        pass
-
-    # td = []
-    # td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
-    # td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
-
-    # item['case_reference'] = td[0]
-    # item['planning_portal_reference'] = td[1]
-    # item['application_registration'] = td[2]
-    # item['application_validation'] = td[3]
-    # item['address'] = td[4]
-    # item['proposed_development'] = td[5]
-    # item['application_status'] = td[6]
-    # item['decision'] = td[7]
-    # item['appeal_status'] = td[8]
-    # item['appeal_decision'] = td[9]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
     further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
     request = FormRequest(further_info_url, method = "GET",
-                          meta = {'item':item},
+                          meta = {'table':table},
                           callback = self.parse_further_info)
     return request
 
   def parse_further_info(self, response):
-    inspect_response(response)
-    item = response.meta['item']
+    # inspect_response(response)
 
-    td = []
-    td += response.xpath("//table[@id='applicationDetails']//tr/td/text()").extract()
-    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+    table = response.meta['table']
 
-    item['application_type'] = td[0]
-    item['expected_decision_level'] = td[3]
-    item['planning_case_officer'] = td[4]
-    item['ward'] = td[5]
-    item['applicants_name'] = td[6]
-    try:
-      item['agent_name'] = td[7]
-    except:
-      item['agent_name'] = "n/a"
+    strat = (parse_html,)
 
-    try:
-      item['agency_company_name'] = td[8]
-    except:
-      item['agency_company_name'] = "n/a"
-
-    try:
-      item['environmental_assessment_requested'] = td[9]
-    except:
-      item['environmental_assessment_requested'] = "n/a"
-
+    tab = extract(response.body, strategy=strat)
+    table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
 
     important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
     important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
     request = FormRequest(important_dates_url, method = "GET",
-                          meta = {'item':item},
+                          meta = {'table':table},
                           callback = self.parse_important_dates)
     return request
 
   def parse_important_dates(self, response):
     #inspect_response(response)
-    item = response.meta['item']
 
-    td = []
-    td += response.xpath("//table[@id='simpleDetailsTable']//tr/td/text()").extract()
-    td = [re.sub(r"\s+", " ", " " + itr + " ").strip() for itr in td]
+    table = response.meta['table']
 
-    item['closing_date_for_comments'] = td[1]
-    item['statutory_expiry_date'] = td[2]
-    item['agreed_expiry_date'] = td[3]
-    item['permission_expiry_date'] = td[5]
-    item['temporary_permission_expiry_date'] = td[6]
+    strat = (parse_html,)
 
-    try:
+    tab = extract(response.body, strategy=strat)
+    table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
+
+    if response.xpath("//*[@id='tab_constraints']/@href").extract():
       constraint_url = response.xpath("//*[@id='tab_constraints']/@href").extract()[0]
       constraint_url = '{0}{1}'.format(self.base_url[1], constraint_url)
       request = FormRequest(constraint_url, method = "GET",
-                            meta = {'item':item},
+                            meta = {'table':table},
                             callback = self.parse_constraints)
       return request
+    else:
+      table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
 
-    except:
-      item['borough'] = "Hammersmith and Fulham"
+      hammersmithItem = self.create_item_class('hammersmithItem', table.keys())
+
+      item = hammersmithItem()
+
+      for key, value in table.items():
+        try:
+          item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+        except:
+          item[key] = value
+
+      item['borough'] = "Hammersmith & Fulham"
       item['domain'] = self.domain
-      documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
-      item['constraints'] = "n/a"
-      item['documents_url'] = documents_url
-      item['polling_district'] = "n/a"
-      item['listed_building_grade'] = "n/a"
-      item['conservation_area'] = "n/a"
-      item['contact_name'] = "n/a"
-      item['contact_address'] = "n/a"
-      item['contact_telephone'] = "n/a"
-      item['date_received'] = "n/a"
-      item['registration_date'] = "n/a"
-      item['public_consultation_ends'] ="n/a"
-      item['target_date_for_decision'] = "n/a"
-      item['decision_date'] = "n/a"
-      item['conditions_and_reasons'] = "n/a"
-      item['formal_reference_number'] = "n/a"
-      item['appeal_received'] = "n/a"
-      item['appeal_start_date'] = "n/a"
-      item['appeal_decision'] = "n/a"
-      item['appeal_decision_date'] = "n/a"
-      item['appeal_decision'] = "n/a"
-      item['planning_team'] = "n/a"
-
-      return item
+      try:
+        documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
+        documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+        item['documents_url'] = documents_url
+      except:
+        item['documents_url'] = "n/a"
+      # return item
 
   def parse_constraints(self, response):
     # inspect_response(response)
-    item = response.meta['item']
+
+    table = response.meta['table']
 
     td = []
     td += response.xpath("//table[@id='caseConstraints']/tr/td/text()").extract()
@@ -194,34 +149,27 @@ class hammSpider(Spider):
 
     json_dict = json.dumps(doc_dict, ensure_ascii=False)
 
+    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
+
+    hammersmithItem = self.create_item_class('hammersmithItem', table.keys())
+
+    item = hammersmithItem()
+
+    for key, value in table.items():
+      try:
+        item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+      except:
+        item[key] = value
+
+    item['constraints'] = json_dict
+    item['borough'] = "Hammersmith & Fulham"
+    item['domain'] = self.domain
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       item['documents_url'] = documents_url
     except:
-      item['documents_url'] = "N/A"
+      item['documents_url'] = "n/a"
 
-    item['constraints'] = json_dict
-    item['borough'] = "Hammersmith & Fulham"
-    item['domain'] = self.domain
-    item['polling_district'] = "n/a"
-    item['listed_building_grade'] = "n/a"
-    item['conservation_area'] = "n/a"
-    item['contact_name'] = "n/a"
-    item['contact_address'] = "n/a"
-    item['contact_telephone'] = "n/a"
-    item['date_received'] = "n/a"
-    item['registration_date'] = "n/a"
-    item['public_consultation_ends'] ="n/a"
-    item['target_date_for_decision'] = "n/a"
-    item['decision_date'] = "n/a"
-    item['conditions_and_reasons'] = "n/a"
-    item['formal_reference_number'] = "n/a"
-    item['appeal_received'] = "n/a"
-    item['appeal_start_date'] = "n/a"
-    item['appeal_decision'] = "n/a"
-    item['appeal_decision_date'] = "n/a"
-    item['appeal_decision'] = "n/a"
-    item['planning_team'] = "n/a"
-
-    return item
+    import pdb; pdb.set_trace()
+    # return item
