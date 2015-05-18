@@ -133,7 +133,7 @@ class hammSpider(Spider):
         item['documents_url'] = documents_url
       except:
         item['documents_url'] = "n/a"
-      # return item
+      return item
 
   def parse_constraints(self, response):
     # inspect_response(response)
@@ -171,5 +171,4 @@ class hammSpider(Spider):
     except:
       item['documents_url'] = "n/a"
 
-    import pdb; pdb.set_trace()
-    # return item
+    return item
