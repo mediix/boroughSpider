@@ -13,7 +13,6 @@ def check_spider_pipeline(process_item_method):
 
     @functools.wraps(process_item_method)
     def wrapper(self, item, spider):
-        # import pdb; pdb.set_trace()
         msg = '%%s %s pipeline step' % (self.__class__.__name__)
         if self.__class__.__name__ == spider.pipeline:
             spider.log(msg % 'executing', level=log.DEBUG)
@@ -25,7 +24,7 @@ def check_spider_pipeline(process_item_method):
 
 class Kensington(object):
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -104,7 +103,7 @@ class Kensington(object):
 class Hammersmith(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -210,7 +209,7 @@ class Hammersmith(object):
 class Westminster(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -274,7 +273,7 @@ class Westminster(object):
 class CityOfLondon(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline

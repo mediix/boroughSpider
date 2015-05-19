@@ -35,13 +35,13 @@ class hammSpider(Spider):
     return type(class_name, (DictItem,), {'fields':fields})
 
   def parse(self, response):
-    # for month in response.xpath("//*[@id='month']/option/text()").extract():
-    return [FormRequest.from_response(response,
+    for month in response.xpath("//*[@id='month']/option/text()").extract():
+      yield FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
-                        formdata = { 'month':'MAY 15',
+                        formdata = { 'month':str(month),
                                      'dateType': 'DC_Validated',
                                      'searchType':'Application' },
-                        callback = self.parse_results)]
+                        callback = self.parse_results)
 
   def parse_results(self, response):
     try:
