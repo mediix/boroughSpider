@@ -34,3 +34,9 @@ class wandsworthSpider(Spider):
     nxt = response.xpath("//a[@class='noborder']/@href").extract()[0]
     while (nxt):
       item += response.xpath()
+
+    strat = (parse_html,)
+    tab = extract(r.content, strategy=strat)
+    table = tab.xpath("//div[@class='dataview']//ul//li")
+
+    table = [[text for text in elem.itertext() if len(text.replace(u'\xa0',u'').replace('\r','').replace('\n','').replace('\t','').replace(' ',''))] for elem in table]
