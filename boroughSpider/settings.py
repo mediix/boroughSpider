@@ -14,8 +14,8 @@ NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
 DOWNLOAD_DELAY = 1.50
 
-# COOKIES_ENABLED = True
-# COOKIES_DEBUG = True
+COOKIES_ENABLED = True
+COOKIES_DEBUG = True
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'

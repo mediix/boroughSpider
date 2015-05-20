@@ -44,9 +44,10 @@ class wandsworthSpider(Spider):
   def parse_search_result(self, response):
     # inspect_response(response)
 
-    for item_url in response.xpath("//td[@title='View Application Details']//a/@href").extract():
-      built_item_url = '{0}{1}'.format(self.base_url[0], item_url)
-      yield  FormRequest(built_item_url, method="GET", callback = self.parse_results)
+    # for item_url in response.xpath("//td[@title='View Application Details']//a/@href").extract():
+    #   built_item_url = '{0}{1}'.format(self.base_url[0], item_url)
+
+    yield  FormRequest(response.url, method="GET", callback = self.parse_applications)
 
     try:
       nxt = response.xpath("//div[@class='align_center']//node()[following::span and not(@class='noborder')]/@href").extract()
@@ -56,7 +57,7 @@ class wandsworthSpider(Spider):
     except:
       pass
 
-  def parse_results(self, response):
+  def parse_applications(self, response):
     inspect_response(response)
 
 
