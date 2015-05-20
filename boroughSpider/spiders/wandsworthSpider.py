@@ -44,32 +44,48 @@ class wandsworthSpider(Spider):
   def parse_search_result(self, response):
     # inspect_response(response)
 
-    # for item_url in response.xpath("//td[@title='View Application Details']//a/@href").extract():
-    #   built_item_url = '{0}{1}'.format(self.base_url[0], item_url)
-
-    yield  FormRequest(response.url, method="GET", callback = self.parse_applications)
+    delete = ""
+    i = 1
+    while (i < 0x20):
+      delete += chr(i)
+      i+=1
 
     try:
-      nxt = response.xpath("//div[@class='align_center']//node()[following::span and not(@class='noborder')]/@href").extract()
-      for url in response.xpath("//a[@class='results_page_number']/@href").extract():
-        next_url = '{0}{1}'.format(self.base_url[0], url)
-        yield FormRequest(next_url, method="GET", callback = self.parse_search_result)
+      # import pdb; pdb.set_trace()
+      next_page = response.xpath("//div[@class='align_center']//node()[following::span and not(@class='noborder')]/@href").extract()[0]
+      next_page = str(next_page).translate(None, delete)
+      next_page_url = '{0}{1}'.format(self.base_url[0], next_page)
+      yield FormRequest(next_page_url, method="GET", callback = self.parse_search_result)
     except:
       pass
 
+    yield FormRequest(response.url, method="GET", callback = self.parse_applications)
+
   def parse_applications(self, response):
+    # inspect_response(response)
+
+    delete = ""
+    i = 1
+    while (i < 0x20):
+      delete += chr(i)
+      i+=1
+
+    applications_url = response.xpath("//td[@title='View Application Details']//a/@href").extract()
+    applications_url = [str(url).translate(None, delete) for url in applications_url]
+    for application in applications_url:
+      application_url = '{0}{1}'.format(self.base_url[0], application)
+      yield FormRequest(application_url, method="GET", callback = self.parse_item)
+
+  def parse_item(self, response):
     inspect_response(response)
 
+    strat = (parse_html,)
 
+    tab = extract(response.content, strategy=strat)
 
-    # strat = (parse_html,)
+    table = tab.xpath("//div[@class='dataview']//ul//li")
 
-    # tab = extract(response.content, strategy=strat)
-
-    # table = tab.xpath("//div[@class='dataview']//ul//li")
-
-    # table = [[str(text.strip().encode('utf-8')).strip() for text in elem.itertext()] for elem in table]
-    # table = [[x for x in elem if x != ''] for elem in table]
-    # table = { t[0]:t[1:] for t in table }
-    # table = { key.replace(' ', '_').lower(): (value[0] if value else '') for key, value in table.items() }
-
+    table = [[str(text.strip().encode('utf-8')).strip() for text in elem.itertext()] for elem in table]
+    table = [[x for x in elem if x != ''] for elem in table]
+    table = { t[0]:t[1:] for t in table }
+    table = { key.replace(' ', '_').lower(): (value[0] if value else '') for key, value in table.items() }
