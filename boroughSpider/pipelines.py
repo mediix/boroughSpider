@@ -24,7 +24,7 @@ def check_spider_pipeline(process_item_method):
 
 class Kensington(object):
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -72,14 +72,14 @@ class Kensington(object):
             item['polling_district'].encode('utf-8'),
             item['listed_building_grade'].encode('utf-8'),
             item['conservation_area'].encode('utf-8'),
-            item['applicants_name'].encode('utf-8'),
+            item["applicant's_name"].encode('utf-8'),
             item['contact_name'].encode('utf-8'),
             item['contact_address'].encode('utf-8'),
             item['contact_telephone'].encode('utf-8'),
             item['application_type'].encode('utf-8'),
             item['proposed_development'].encode('utf-8'),
             item['date_received'].encode('utf-8'),
-            item['registration_date'].encode('utf-8'),
+            item['registration_date_(statutory_start_date)'].encode('utf-8'),
             item['public_consultation_ends'].encode('utf-8'),
             item['application_status'].encode('utf-8'),
             item['target_date_for_decision'].encode('utf-8'),
@@ -103,7 +103,7 @@ class Kensington(object):
 class Hammersmith(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -209,7 +209,7 @@ class Hammersmith(object):
 class Westminster(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -273,7 +273,7 @@ class Westminster(object):
 class CityOfLondon(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
+        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline

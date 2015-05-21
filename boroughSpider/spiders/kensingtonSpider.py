@@ -61,7 +61,7 @@ class kensingtonSpider(Spider):
         table = list(prototypes.convert_table(tab.xpath("//table")))[:6]
         result = {}
         for d in table: result.update(d)
-        result = { key.replace(' ', '_').lower(): value[0] for key, value in result.items() }
+        result = { key.replace(' ', '_').replace(':', '').lower(): value[0] for key, value in result.items() }
 
         kensingtonItem = self.create_item_class('kensingtonItem', result.keys())
 

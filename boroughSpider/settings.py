@@ -24,13 +24,14 @@ ITEM_PIPELINES = {
     'boroughSpider.pipelines.Westminster',
     'boroughSpider.pipelines.Hammersmith',
     'boroughSpider.pipelines.Kensington',
-    'boroughSpider.pipelines.CityOfLondon'
+    'boroughSpider.pipelines.CityOfLondon',
+    # 'boroughSpider.pipelines.Wandsworth'
 }
 
-# DOWNLOADER_MIDDLEWARES = {
-#     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
-#     'boroughSpider.middlewares.ProxyMiddleware': 100,
-# }
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+    'boroughSpider.middlewares.ProxyMiddleware': 100,
+}
 
 ##############################################################################
 '''
