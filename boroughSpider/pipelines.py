@@ -24,7 +24,7 @@ def check_spider_pipeline(process_item_method):
 
 class Kensington(object):
     def __init__(self):
-        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -103,7 +103,7 @@ class Kensington(object):
 class Hammersmith(object):
 
     def __init__(self):
-        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -209,7 +209,7 @@ class Hammersmith(object):
 class Westminster(object):
 
     def __init__(self):
-        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline
@@ -273,7 +273,7 @@ class Westminster(object):
 class CityOfLondon(object):
 
     def __init__(self):
-        self.conn = self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='root', passwd='pashmak.', db='scrapy', host='rappi.local', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
 
     @check_spider_pipeline

@@ -51,7 +51,7 @@ class hammSpider(Spider):
       num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
       #
       for page_num in xrange(1, num_of_pages+1):
-        page_url = '{0}{1}'.format(self.base_url[0], num_of_pages)
+        page_url = '{0}{1}'.format(self.base_url[0], page_num)
         yield FormRequest(page_url, method="GET", callback = self.parse_items)
     except:
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
