@@ -31,11 +31,13 @@ class Kensington(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
+            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
             self.cursor.execute("""INSERT INTO boroughs
-            (borough,
+            (address_id,
+            borough,
             domain,
             case_reference,
-            address,
             ward,
             polling_district,
             listed_building_grade,
@@ -62,13 +64,12 @@ class Kensington(object):
             planning_case_officer,
             planning_team,
             documents_url,
-            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                         %s, %s, NOW())""",
             (item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('case_reference', self.default),
-            item.get('address', self.default),
             item.get('ward', self.default),
             item.get('polling_district', self.default),
             item.get('listed_building_grade', self.default),
@@ -104,18 +105,20 @@ class Kensington(object):
 class Hammersmith(object):
 
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='192.168.1.207', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
         self.default = 'n/a'
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
+            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
             self.cursor.execute("""INSERT INTO boroughs
-            (borough,
+            (address_id,
+            borough,
             domain,
             case_reference,
-            address,
             ward,
             applicants_name,
             application_type,
@@ -140,13 +143,12 @@ class Hammersmith(object):
             permission_expiry_date,
             temporary_permission_expiry_date,
             constraints,
-            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
-                                    %s, %s, %s, %s, %s, %s, %s, %s,
-                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s,
+                                                %s, %s, %s, %s, %s, %s, %s, %s,
+                                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
             (item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('reference', self.default),
-            item.get('address', self.default),
             item.get('ward', self.default),
             item.get('applicant_name', self.default),
             item.get('application_type', self.default),
@@ -186,11 +188,13 @@ class Westminster(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
+            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
             self.cursor.execute("""INSERT INTO boroughs
-            (borough,
+            (address_id,
+            borough,
             domain,
             case_reference,
-            address,
             ward,
             planning_case_officer,
             proposed_development,
@@ -210,12 +214,11 @@ class Westminster(object):
             application_received_date,
             application_validated_date,
             documents_url,
-            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('reference', self.default),
-            item.get('address', self.default),
             item.get('ward', self.default),
             item.get('case_officer', self.default),
             item.get('proposal', self.default),
@@ -251,11 +254,13 @@ class CityOfLondon(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
+            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
             self.cursor.execute("""INSERT INTO boroughs
-            (borough,
+            (address_id,
+            borough,
             domain,
             case_reference,
-            address,
             ward,
             planning_case_officer,
             proposed_development,
@@ -275,12 +280,11 @@ class CityOfLondon(object):
             application_received_date,
             application_validated_date,
             documents_url,
-            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('reference', self.default),
-            item.get('address', self.default),
             item.get('ward', self.default),
             item.get('case_officer', self.default),
             item.get('proposal', self.default),
