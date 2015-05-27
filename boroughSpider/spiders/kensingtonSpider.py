@@ -71,6 +71,8 @@ class kensingtonSpider(Spider):
           try:
             if value == '':
                 item[key] = 'n/a'
+            elif value.isdigit():
+                item[key] = value
             else:
                 item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
           except:

@@ -113,7 +113,7 @@ class hammSpider(Spider):
                             callback = self.parse_constraints)
       return request
     else:
-      table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
+      table = {key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items()}
 
       hammersmithItem = self.create_item_class('hammersmithItem', table.keys())
 
@@ -121,7 +121,12 @@ class hammSpider(Spider):
 
       for key, value in table.items():
         try:
-          item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+          if value == '':
+            item[key] = 'n/a'
+          elif value.isdigit():
+            item[key] = value
+          else:
+            item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
         except:
           item[key] = value
 
@@ -149,7 +154,7 @@ class hammSpider(Spider):
 
     json_dict = json.dumps(doc_dict, ensure_ascii=False)
 
-    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
+    table = {key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items()}
 
     hammersmithItem = self.create_item_class('hammersmithItem', table.keys())
 
@@ -157,7 +162,12 @@ class hammSpider(Spider):
 
     for key, value in table.items():
       try:
-        item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+        if value == '':
+          item[key] = 'n/a'
+        elif value.isdigit():
+          item[key] = value
+        else:
+          item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
       except:
         item[key] = value
 
@@ -169,6 +179,6 @@ class hammSpider(Spider):
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       item['documents_url'] = documents_url
     except:
-      item['documents_url'] = "n/a"
+      item['documents_url'] = 'n/a'
 
     return item

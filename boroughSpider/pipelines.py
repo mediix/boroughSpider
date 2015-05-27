@@ -13,12 +13,12 @@ def check_spider_pipeline(process_item_method):
 
     @functools.wraps(process_item_method)
     def wrapper(self, item, spider):
-        msg = '%%s %s pipeline step' % (self.__class__.__name__)
+        msg = '%%s %s pipeline' % (self.__class__.__name__)
         if self.__class__.__name__ == spider.pipeline:
             spider.log(msg % 'executing', level=log.DEBUG)
             return process_item_method(self, item, spider)
         else:
-            spider.log(msg % 'skipping', level=log.DEBUG)
+            # spider.log(msg % 'skipping', level=log.DEBUG)
             return item
     return wrapper
 
@@ -26,6 +26,7 @@ class Kensington(object):
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
+        self.default = 'n/a'
 
     @check_spider_pipeline
     def process_item(self, item, spider):
@@ -64,36 +65,36 @@ class Kensington(object):
             date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                         %s, %s, NOW())""",
-            (item['borough'].encode('utf-8'),
-            item['domain'].encode('utf-8'),
-            item['case_reference'].encode('utf-8'),
-            item['address'].encode('utf-8'),
-            item['ward'].encode('utf-8'),
-            item['polling_district'].encode('utf-8'),
-            item['listed_building_grade'].encode('utf-8'),
-            item['conservation_area'].encode('utf-8'),
-            item["applicant's_name"].encode('utf-8'),
-            item['contact_name'].encode('utf-8'),
-            item['contact_address'].encode('utf-8'),
-            item['contact_telephone'].encode('utf-8'),
-            item['application_type'].encode('utf-8'),
-            item['proposed_development'].encode('utf-8'),
-            item['date_received'].encode('utf-8'),
-            item['registration_date_(statutory_start_date)'].encode('utf-8'),
-            item['public_consultation_ends'].encode('utf-8'),
-            item['application_status'].encode('utf-8'),
-            item['target_date_for_decision'].encode('utf-8'),
-            item['decision'].encode('utf-8'),
-            item['decision_date'].encode('utf-8'),
-            item['conditions_and_reasons'].encode('utf-8'),
-            item['formal_reference_number'].encode('utf-8'),
-            item['appeal_received'].encode('utf-8'),
-            item['appeal_start_date'].encode('utf-8'),
-            item['appeal_decision'].encode('utf-8'),
-            item['appeal_decision_date'].encode('utf-8'),
-            item['planning_case_officer'].encode('utf-8'),
-            item['planning_team'].encode('utf-8'),
-            item['documents_url'].encode('utf-8')))
+            (item.get('borough', self.default),
+            item.get('domain', self.default),
+            item.get('case_reference', self.default),
+            item.get('address', self.default),
+            item.get('ward', self.default),
+            item.get('polling_district', self.default),
+            item.get('listed_building_grade', self.default),
+            item.get('conservation_area', self.default),
+            item.get("applicant's_name", self.default),
+            item.get('contact_name', self.default),
+            item.get('contact_address', self.default),
+            item.get('contact_telephone', self.default),
+            item.get('application_type', self.default),
+            item.get('proposed_development', self.default),
+            item.get('date_received', self.default),
+            item.get('registration_date_(statutory_start_date)', self.default),
+            item.get('public_consultation_ends', self.default),
+            item.get('application_status', self.default),
+            item.get('target_date_for_decision', self.default),
+            item.get('decision', self.default),
+            item.get('decision_date', self.default),
+            item.get('conditions_and_reasons', self.default),
+            item.get('formal_reference_number', self.default),
+            item.get('appeal_received', self.default),
+            item.get('appeal_start_date', self.default),
+            item.get('appeal_decision', self.default),
+            item.get('appeal_decision_date', self.default),
+            item.get('planning_case_officer', self.default),
+            item.get('planning_team', self.default),
+            item.get('documents_url', self.default)))
             self.conn.commit()
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -105,6 +106,7 @@ class Hammersmith(object):
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
+        self.default = 'n/a'
 
     @check_spider_pipeline
     def process_item(self, item, spider):
@@ -115,30 +117,14 @@ class Hammersmith(object):
             case_reference,
             address,
             ward,
-            polling_district,
-            listed_building_grade,
-            conservation_area,
             applicants_name,
-            contact_name,
-            contact_address,
-            contact_telephone,
             application_type,
             proposed_development,
-            date_received,
-            registration_date,
-            public_consultation_ends,
             application_status,
-            target_date_for_decision,
             decision,
             decision_date,
-            conditions_and_reasons,
-            formal_reference_number,
-            appeal_received,
-            appeal_start_date,
             appeal_decision,
             appeal_decision_date,
-            planning_case_officer,
-            planning_team,
             documents_url,
             planning_portal_reference,
             application_registration,
@@ -154,53 +140,37 @@ class Hammersmith(object):
             permission_expiry_date,
             temporary_permission_expiry_date,
             constraints,
-            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-            (item['borough'].encode('utf-8'),
-            item['domain'].encode('utf-8'),
-            item['case_reference'].encode('utf-8'),
-            item['address'].encode('utf-8'),
-            item['ward'].encode('utf-8'),
-            item['polling_district'].encode('utf-8'),
-            item['listed_building_grade'].encode('utf-8'),
-            item['conservation_area'].encode('utf-8'),
-            item['applicants_name'].encode('utf-8'),
-            item['contact_name'].encode('utf-8'),
-            item['contact_address'].encode('utf-8'),
-            item['contact_telephone'].encode('utf-8'),
-            item['application_type'].encode('utf-8'),
-            item['proposed_development'].encode('utf-8'),
-            item['date_received'].encode('utf-8'),
-            item['registration_date'].encode('utf-8'),
-            item['public_consultation_ends'].encode('utf-8'),
-            item['application_status'].encode('utf-8'),
-            item['target_date_for_decision'].encode('utf-8'),
-            item['decision'].encode('utf-8'),
-            item['decision_date'].encode('utf-8'),
-            item['conditions_and_reasons'].encode('utf-8'),
-            item['formal_reference_number'].encode('utf-8'),
-            item['appeal_received'].encode('utf-8'),
-            item['appeal_start_date'].encode('utf-8'),
-            item['appeal_decision'].encode('utf-8'),
-            item['appeal_decision_date'].encode('utf-8'),
-            item['planning_case_officer'].encode('utf-8'),
-            item['planning_team'].encode('utf-8'),
-            item['documents_url'].encode('utf-8'),
-            item['planning_portal_reference'].encode('utf-8'),
-            item['application_registration'].encode('utf-8'),
-            item['application_validation'].encode('utf-8'),
-            item['appeal_status'].encode('utf-8'),
-            item['expected_decision_level'].encode('utf-8'),
-            item['agent_name'].encode('utf-8'),
-            item['agency_company_name'].encode('utf-8'),
-            item['environmental_assessment_requested'].encode('utf-8'),
-            item['closing_date_for_comments'].encode('utf-8'),
-            item['statutory_expiry_date'].encode('utf-8'),
-            item['agreed_expiry_date'].encode('utf-8'),
-            item['permission_expiry_date'].encode('utf-8'),
-            item['temporary_permission_expiry_date'].encode('utf-8'),
-            item['constraints'].encode('utf-8')))
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s,
+                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+            (item.get('borough', self.default),
+            item.get('domain', self.default),
+            item.get('reference', self.default),
+            item.get('address', self.default),
+            item.get('ward', self.default),
+            item.get('applicant_name', self.default),
+            item.get('application_type', self.default),
+            item.get('proposal', self.default),
+            item.get('status', self.default),
+            item.get('decision', self.default),
+            item.get('decision_date', self.default),
+            item.get('appeal_decision', self.default),
+            item.get('appeal_status', self.default),
+            item.get('documents_url', self.default),
+            item.get('planning_portal_reference', self.default),
+            item.get('application_registered', self.default),
+            item.get('application_validated', self.default),
+            item.get('appeal_status', self.default),
+            item.get('expected_decision_level', self.default),
+            item.get('agent_name', self.default),
+            item.get('agent_company_name', self.default),
+            item.get('environmental_assessment_requested', self.default),
+            item.get('closing_date_for_comments', self.default),
+            item.get('statutory_expiry_date', self.default),
+            item.get('agreed_expiry_date', self.default),
+            item.get('permission_expiry_date', self.default),
+            item.get('temporary_permission_expiry_date', self.default),
+            item.get('constraints', self.default)))
             self.conn.commit()
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -211,6 +181,7 @@ class Westminster(object):
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
+        self.default = 'n/a'
 
     @check_spider_pipeline
     def process_item(self, item, spider):
@@ -241,29 +212,29 @@ class Westminster(object):
             documents_url,
             date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-            (item['borough'].encode('utf-8'),
-            item['domain'].encode('utf-8'),
-            item['reference'].encode('utf-8'),
-            item['address'].encode('utf-8'),
-            item['ward'].encode('utf-8'),
-            item['case_officer'].encode('utf-8'),
-            item['proposal'].encode('utf-8'),
-            item['status'].encode('utf-8'),
-            item['decision'].encode('utf-8'),
-            item['appeal_decision'].encode('utf-8'),
-            item['appeal_status'].encode('utf-8'),
-            item['application_type'].encode('utf-8'),
-            item['amenity_society'].encode('utf-8'),
-            item['district_reference'].encode('utf-8'),
-            item['applicant_name'].encode('utf-8'),
-            item['applicant_address'].encode('utf-8'),
-            item['case_officer'].encode('utf-8'),
-            item['agent_company_name'].encode('utf-8'),
-            item['agent_address'].encode('utf-8'),
-            item['environmental_assessment_requested'].encode('utf-8'),
-            item['application_received'].encode('utf-8'),
-            item['application_validated'].encode('utf-8'),
-            item['documents_url'].encode('utf-8')))
+            (item.get('borough', self.default),
+            item.get('domain', self.default),
+            item.get('reference', self.default),
+            item.get('address', self.default),
+            item.get('ward', self.default),
+            item.get('case_officer', self.default),
+            item.get('proposal', self.default),
+            item.get('status', self.default),
+            item.get('decision', self.default),
+            item.get('appeal_decision', self.default),
+            item.get('appeal_status', self.default),
+            item.get('application_type', self.default),
+            item.get('amenity_society', self.default),
+            item.get('district_reference', self.default),
+            item.get('applicant_name', self.default),
+            item.get('applicant_address', self.default),
+            item.get('case_officer', self.default),
+            item.get('agent_company_name', self.default),
+            item.get('agent_address', self.default),
+            item.get('environmental_assessment_requested', self.default),
+            item.get('application_received', self.default),
+            item.get('application_validated', self.default),
+            item.get('documents_url', self.default)))
             self.conn.commit()
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -275,6 +246,7 @@ class CityOfLondon(object):
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
+        self.default = 'n/a'
 
     @check_spider_pipeline
     def process_item(self, item, spider):
@@ -305,29 +277,29 @@ class CityOfLondon(object):
             documents_url,
             date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-            (item['borough'].encode('utf-8'),
-            item['domain'].encode('utf-8'),
-            item['reference'].encode('utf-8'),
-            item['address'].encode('utf-8'),
-            item['ward'].encode('utf-8'),
-            item['case_officer'].encode('utf-8'),
-            item['proposal'].encode('utf-8'),
-            item['status'].encode('utf-8'),
-            item['decision'].encode('utf-8'),
-            item['appeal_decision'].encode('utf-8'),
-            item['appeal_status'].encode('utf-8'),
-            item['application_type'].encode('utf-8'),
-            item['amenity_society'].encode('utf-8'),
-            item['district_reference'].encode('utf-8'),
-            item['applicant_name'].encode('utf-8'),
-            item['applicant_address'].encode('utf-8'),
-            item['case_officer'].encode('utf-8'),
-            item['agent_company_name'].encode('utf-8'),
-            item['agent_address'].encode('utf-8'),
-            item['environmental_assessment_requested'].encode('utf-8'),
-            item['application_received'].encode('utf-8'),
-            item['application_validated'].encode('utf-8'),
-            item['documents_url'].encode('utf-8')))
+            (item.get('borough', self.default),
+            item.get('domain', self.default),
+            item.get('reference', self.default),
+            item.get('address', self.default),
+            item.get('ward', self.default),
+            item.get('case_officer', self.default),
+            item.get('proposal', self.default),
+            item.get('status', self.default),
+            item.get('decision', self.default),
+            item.get('appeal_decision', self.default),
+            item.get('appeal_status', self.default),
+            item.get('application_type', self.default),
+            item.get('amenity_society', self.default),
+            item.get('district_reference', self.default),
+            item.get('applicant_name', self.default),
+            item.get('applicant_address', self.default),
+            item.get('case_officer', self.default),
+            item.get('agent_company_name', self.default),
+            item.get('agent_address', self.default),
+            item.get('environmental_assessment_requested', self.default),
+            item.get('application_received', self.default),
+            item.get('application_validated', self.default),
+            item.get('documents_url', self.default)))
             self.conn.commit()
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])

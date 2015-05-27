@@ -93,7 +93,7 @@ class westminsterSpider(Spider):
 
     tab = extract(response.body, strategy=strat)
     table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
-    table = {key.replace(' ', '_').lower(): value[0] for key, value in table.items()}
+    table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
 
     westminsterItem = self.create_item_class('westminsterItem', table.keys())
 
@@ -101,7 +101,12 @@ class westminsterSpider(Spider):
 
     for key, value in table.items():
       try:
-        item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+        if value == '':
+          item[key] = 'n/a'
+        elif value.isdigit():
+          item[key] = value
+        else:
+          item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
       except:
         item[key] = value
 
