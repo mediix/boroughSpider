@@ -254,8 +254,14 @@ class CityOfLondon(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.id = %s;""", [item.get('address', self.default)])
+            address_response = self.cursor.fetchone()
+            if address_response is None:
+                self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+                self.cursor.execute("""SELECT LAST_INSERT_ID();""", [item.get('address', self.default)])
+                address_response = self.cursor.fetchone()
+
+            address_id = address_response[0]
             self.cursor.execute("""INSERT INTO boroughs
             (address_id,
             borough,
@@ -280,9 +286,10 @@ class CityOfLondon(object):
             application_received_date,
             application_validated_date,
             documents_url,
-            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-            (item.get('borough', self.default),
+            (address_id,
+            item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('reference', self.default),
             item.get('ward', self.default),
