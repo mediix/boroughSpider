@@ -57,6 +57,8 @@ class hammSpider(Spider):
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
         item_url = '{0}{1}'.format(self.base_url[1], url)
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+    finally:
+      pass
 
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
@@ -134,7 +136,7 @@ class hammSpider(Spider):
       item['domain'] = self.domain
       try:
         documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-        documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+        documents_url = '{0}{1}'.format(self.base_url[1], str(documents_url))
         item['documents_url'] = documents_url
       except:
         item['documents_url'] = "n/a"
@@ -176,7 +178,7 @@ class hammSpider(Spider):
     item['domain'] = self.domain
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+      documents_url = '{0}{1}'.format(self.base_url[1], str(documents_url))
       item['documents_url'] = documents_url
     except:
       item['documents_url'] = 'n/a'

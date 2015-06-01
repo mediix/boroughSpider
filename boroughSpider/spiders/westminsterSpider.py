@@ -7,10 +7,6 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 
-import time
-
-today = time.strftime("%x %X")
-
 class westminsterSpider(Spider):
   name = 'westSpider'
 
@@ -24,6 +20,7 @@ class westminsterSpider(Spider):
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def create_item_class(self, class_name, field_list):
+
     fields = {}
     for field_name in field_list:
       fields[field_name] = Field()
@@ -35,8 +32,11 @@ class westminsterSpider(Spider):
 
   def parse(self, response):
     # inspect_response(response)
-    for parish in response.xpath("//*[@id='parish']/option/@value").extract()[1:]:
-      for month in response.xpath("//*[@id='month']/option/text()").extract():
+
+    parishes = response.xpath("//*[@id='parish']/option/@value").extract()[1:]
+    months = response.xpath("//*[@id='month']/option/@value").extract()
+    for parish in parishes:
+      for month in months:
         yield FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
                           formdata = { 'searchCriteria.parish':str(parish),
@@ -48,42 +48,81 @@ class westminsterSpider(Spider):
   def parse_results(self, response):
     # inspect_response(response)
     try:
-      for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-        item_url = '{0}{1}'.format(self.base_url[1], url)
-        yield FormRequest(item_url, method="GET", callback = self.parse_items)
-
-      num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-                                    /text()[(preceding-sibling::strong)]").extract()[0]
-      num_of_pages = int(num_of_pages.split()[1])
-      num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
-      #
-      for page_num in xrange(2, num_of_pages+1):
-        page_url = '{0}{1}'.format(self.base_url[0], page_num)
-        yield FormRequest(page_url, method="GET", callback = self.parse_items)
+      yield FormRequest.from_response(response,
+                          formname = 'searchCriteriaForm',
+                          formdata = { 'searchCriteria.page':'1',
+                                       'action':'page',
+                                       'orderBy':'DateReceived',
+                                       'orderByDirection':'Descending',
+                                       'searchCriteria.resultsPerPage':'100' },
+                          callback = self.parse_long_resutls)
     except:
+      pass
+
+  def parse_long_resutls(self, response):
+    # inspect_response(response)
+
+    if response.xpath("//*[@class='pager top']/span[@class='showing']"):
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-        item_url = '{0}{1}'.format(self.base_url[1], url)
+        item_url = '{0}{1}'.format(self.base_url[1], str(url))
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+
+      for href in response.xpath("//p[@class='pager top']/a[@class='page']/@href").extract():
+        nxt_url = '{0}{1}'.format(self.base_url[0], str(href))
+        yield FormRequest(nxt_url, method="GET", callback = self.parse_items)
+
+    else:
+      try:
+        for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+          item_url = '{0}{1}'.format(self.base_url[1], str(url))
+          yield FormRequest(item_url, method="GET", callback = self.parse_items)
+      except:
+        pass
+
+    # try:
+    #   items = response.xpath("//*[@id='searchresults']//li/a/@href").extract()
+    #   for href in items:
+    #     item_url = '{0}{1}'.format(self.base_url[1], str(href))
+    #     yield FormRequest(item_url, method="GET", callback = self.parse_items)
+
+    #   nxt = response.xpath("p[@class='pager top']/a[@class='page']/@href").extract()
+    #   for href in nxt:
+    #     item_url = '{0}{1}'.format(self.base_url[1], str(href))
+    #     yield FormRequest(item_url, method = "GET", callback = self.parse_items)
+
+    # num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
+    #                               /text()[(preceding-sibling::strong)]").extract()[0]
+    # num_of_pages = int(num_of_pages.split()[1])
+    # num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
+    # #
+    # for page_num in xrange(2, num_of_pages+1):
+    #   page_url = '{0}{1}'.format(self.base_url[0], page_num)
+    #   yield FormRequest(page_url, method="GET", callback = self.parse_items)
+
+    # except:
+    #   for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+    #     item_url = '{0}{1}'.format(self.base_url[1], url)
+    #     yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+    # finally:
+    #   pass
 
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-      item_url = '{0}{1}'.format(self.base_url[1], url)
+      item_url = '{0}{1}'.format(self.base_url[1], str(url))
       yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
   def parse_summary(self, response):
     # inspect_response(response)
-
     strat = (parse_html,)
 
     tab = extract(response.body, strategy=strat)
     table = list(prototypes.convert_table(tab.xpath("//table")))[0]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
-    further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
-    request = FormRequest(further_info_url, method = "GET",
+    further_info_url = '{0}{1}'.format(self.base_url[1], str(further_info_url))
+    return [FormRequest(further_info_url, method = "GET",
                           meta = {'table':table},
-                          callback = self.parse_further_info)
-    return request
+                          callback = self.parse_further_info)]
 
   def parse_further_info(self, response):
     # inspect_response(response)
