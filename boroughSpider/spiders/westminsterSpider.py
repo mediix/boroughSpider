@@ -32,7 +32,6 @@ class westminsterSpider(Spider):
 
   def parse(self, response):
     # inspect_response(response)
-
     parishes = response.xpath("//*[@id='parish']/option/@value").extract()[1:]
     months = response.xpath("//*[@id='month']/option/@value").extract()
     for parish in parishes:
@@ -79,33 +78,6 @@ class westminsterSpider(Spider):
       except:
         pass
 
-    # try:
-    #   items = response.xpath("//*[@id='searchresults']//li/a/@href").extract()
-    #   for href in items:
-    #     item_url = '{0}{1}'.format(self.base_url[1], str(href))
-    #     yield FormRequest(item_url, method="GET", callback = self.parse_items)
-
-    #   nxt = response.xpath("p[@class='pager top']/a[@class='page']/@href").extract()
-    #   for href in nxt:
-    #     item_url = '{0}{1}'.format(self.base_url[1], str(href))
-    #     yield FormRequest(item_url, method = "GET", callback = self.parse_items)
-
-    # num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-    #                               /text()[(preceding-sibling::strong)]").extract()[0]
-    # num_of_pages = int(num_of_pages.split()[1])
-    # num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
-    # #
-    # for page_num in xrange(2, num_of_pages+1):
-    #   page_url = '{0}{1}'.format(self.base_url[0], page_num)
-    #   yield FormRequest(page_url, method="GET", callback = self.parse_items)
-
-    # except:
-    #   for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-    #     item_url = '{0}{1}'.format(self.base_url[1], url)
-    #     yield FormRequest(item_url, method="GET", callback = self.parse_summary)
-    # finally:
-    #   pass
-
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
       item_url = '{0}{1}'.format(self.base_url[1], str(url))
@@ -126,6 +98,7 @@ class westminsterSpider(Spider):
 
   def parse_further_info(self, response):
     # inspect_response(response)
+
     table = response.meta['table']
 
     strat = (parse_html,)

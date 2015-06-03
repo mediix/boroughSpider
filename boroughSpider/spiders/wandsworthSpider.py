@@ -7,16 +7,12 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 
-import time
-
-today = time.strftime("%x %X")
-
 class wandsworthSpider(Spider):
-  name = 'wandsSpider'
+  name = 'wandSpider'
 
   domain = 'http://ww3.wandsworth.gov.uk'
 
-  pipeline = 'Wandsworthspider'
+  pipeline = 'Wandsworth'
 
   base_url = ["http://ww3.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
 
@@ -93,4 +89,5 @@ class wandsworthSpider(Spider):
     except:
       item['documents_url'] = "n/a"
 
-    return item
+    import pdb; pdb.set_trace()
+    # return item

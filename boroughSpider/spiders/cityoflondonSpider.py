@@ -63,8 +63,8 @@ class cityOfLondonSpider(Spider):
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
       for url in response.xpath("//p[@class='pager top']/a[@class='page']/@href").extract():
-        nxt_page_url = '{0}{1}'.format(self.base_url[0], str(url))
-        yield FormRequest(nxt_page_url, method="GET", callback = self.parse_items)
+        nxt_url = '{0}{1}'.format(self.base_url[0], str(url))
+        yield FormRequest(nxt_url, method="GET", callback = self.parse_items)
 
     else:
       try:
@@ -74,29 +74,11 @@ class cityOfLondonSpider(Spider):
       except:
         pass
 
-    # try:
-    #   for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-    #     item_url = '{0}{1}'.format(self.base_url[1], url)
-    #     yield FormRequest(item_url, method="GET", callback = self.parse_items)
-
-    #   num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-    #                                 /text()[(preceding-sibling::strong)]").extract()[0]
-    #   num_of_pages = int(num_of_pages.split()[1])
-    #   num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
-    #   #
-    #   for page_num in xrange(2, num_of_pages+1):
-    #     page_url = '{0}{1}'.format(self.base_url[0], page_num)
-    #     yield FormRequest(page_url, method="GET", callback = self.parse_items)
-    # except:
-    #   for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-    #     item_url = '{0}{1}'.format(self.base_url[1], url)
-    #     yield FormRequest(item_url, method="GET", callback = self.parse_summary)
-
   def parse_items(self, response):
     # inspect_response(response)
 
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-      item_url = '{0}{1}'.format(self.base_url[1], url)
+      item_url = '{0}{1}'.format(self.base_url[1], str(url))
       yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
   def parse_summary(self, response):

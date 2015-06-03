@@ -31,8 +31,16 @@ class Kensington(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
+            address_response = self.cursor.fetchone()
+            if address_response is None:
+                self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+                self.conn.commit()
+                self.cursor.execute("SELECT LAST_INSERT_ID();")
+                address_response = self.cursor.fetchone()
+
+            address_id = address_response[0]
+
             self.cursor.execute("""INSERT INTO boroughs
             (address_id,
             borough,
@@ -64,10 +72,11 @@ class Kensington(object):
             planning_case_officer,
             planning_team,
             documents_url,
-            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                         %s, %s, NOW())""",
-            (item.get('borough', self.default),
+            (address_id,
+            item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('case_reference', self.default),
             item.get('ward', self.default),
@@ -112,8 +121,16 @@ class Hammersmith(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
+            address_response = self.cursor.fetchone()
+            if address_response is None:
+                self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+                self.conn.commit()
+                self.cursor.execute("SELECT LAST_INSERT_ID();")
+                address_response = self.cursor.fetchone()
+
+            address_id = address_response[0]
+
             self.cursor.execute("""INSERT INTO boroughs
             (address_id,
             borough,
@@ -143,10 +160,11 @@ class Hammersmith(object):
             permission_expiry_date,
             temporary_permission_expiry_date,
             constraints,
-            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
                                                 %s, %s, %s, %s, %s, %s, %s, %s,
                                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
-            (item.get('borough', self.default),
+            (address_id,
+            item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('reference', self.default),
             item.get('ward', self.default),
@@ -188,8 +206,16 @@ class Westminster(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-            self.cursor.execute("""SET @address_id = LAST_INSERT_ID();""")
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
+            address_response = self.cursor.fetchone()
+            if address_response is None:
+                self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+                self.conn.commit()
+                self.cursor.execute("SELECT LAST_INSERT_ID();")
+                address_response = self.cursor.fetchone()
+
+            address_id = address_response[0]
+
             self.cursor.execute("""INSERT INTO boroughs
             (address_id,
             borough,
@@ -214,9 +240,10 @@ class Westminster(object):
             application_received_date,
             application_validated_date,
             documents_url,
-            date_scraped) VALUES (@address_id, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-            (item.get('borough', self.default),
+            (address_id,
+            item.get('borough', self.default),
             item.get('domain', self.default),
             item.get('reference', self.default),
             item.get('ward', self.default),
@@ -254,14 +281,16 @@ class CityOfLondon(object):
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.id = %s;""", [item.get('address', self.default)])
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
             address_response = self.cursor.fetchone()
             if address_response is None:
                 self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-                self.cursor.execute("""SELECT LAST_INSERT_ID();""", [item.get('address', self.default)])
+                self.conn.commit()
+                self.cursor.execute("SELECT LAST_INSERT_ID();")
                 address_response = self.cursor.fetchone()
 
             address_id = address_response[0]
+
             self.cursor.execute("""INSERT INTO boroughs
             (address_id,
             borough,
@@ -292,8 +321,94 @@ class CityOfLondon(object):
             temporary_permission_expiry_date,
             constraints,
             date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
-                                                %s, %s, %s, %s, %s, %s, %s, %s,
-                                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
+                                    %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
+            (address_id,
+            item.get('borough', self.default),
+            item.get('domain', self.default),
+            item.get('reference', self.default),
+            item.get('ward', self.default),
+            item.get('applicant_name', self.default),
+            item.get('application_type', self.default),
+            item.get('proposal', self.default),
+            item.get('status', self.default),
+            item.get('decision', self.default),
+            item.get('decision_date', self.default),
+            item.get('appeal_decision', self.default),
+            item.get('appeal_status', self.default),
+            item.get('documents_url', self.default),
+            item.get('planning_portal_reference', self.default),
+            item.get('application_registered', self.default),
+            item.get('application_validated', self.default),
+            item.get('appeal_status', self.default),
+            item.get('expected_decision_level', self.default),
+            item.get('agent_name', self.default),
+            item.get('agent_company_name', self.default),
+            item.get('environmental_assessment_requested', self.default),
+            item.get('closing_date_for_comments', self.default),
+            item.get('statutory_expiry_date', self.default),
+            item.get('agreed_expiry_date', self.default),
+            item.get('permission_expiry_date', self.default),
+            item.get('temporary_permission_expiry_date', self.default),
+            item.get('constraints', self.default)))
+            self.conn.commit()
+        except MySQLdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            return item
+
+
+class Wandsworth(object):
+
+    def __init__(self):
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.cursor = self.conn.cursor()
+        self.default = 'n/a'
+
+    @check_spider_pipeline
+    def process_item(self, item, spider):
+        try:
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
+            address_response = self.cursor.fetchone()
+            if address_response is None:
+                self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+                self.conn.commit()
+                self.cursor.execute("SELECT LAST_INSERT_ID();")
+                address_response = self.cursor.fetchone()
+
+            address_id = address_response[0]
+
+            self.cursor.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            applicants_name,
+            application_type,
+            proposed_development,
+            application_status,
+            decision,
+            decision_date,
+            appeal_decision,
+            appeal_decision_date,
+            documents_url,
+            planning_portal_reference,
+            application_registration,
+            application_validation,
+            appeal_status,
+            expected_decision_level,
+            agent_name,
+            agency_company_name,
+            environmental_assessment_requested,
+            closing_date_for_comments,
+            statutory_expiry_date,
+            agreed_expiry_date,
+            permission_expiry_date,
+            temporary_permission_expiry_date,
+            constraints,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
             (address_id,
             item.get('borough', self.default),
             item.get('domain', self.default),
