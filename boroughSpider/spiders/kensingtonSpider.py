@@ -7,9 +7,7 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 #
-import time
-
-today = time.strftime("%x %X")
+from datetime import date, datetime, timedelta
 
 class kensingtonSpider(Spider):
     name = 'kensSpider'
@@ -17,6 +15,12 @@ class kensingtonSpider(Spider):
     domain = 'http://rbkc.gov.uk'
 
     pipeline = 'Kensington'
+
+    def create_dates(self, start, end, delta):
+        curr = self.start
+        while curr < self.end:
+            yield curr
+            curr += self.delta
 
     def create_item_class(self, class_name, field_list):
         fields = {}
@@ -40,10 +44,15 @@ class kensingtonSpider(Spider):
 
     def parse_date_result(self, response):
         #inspect_response(response)
-        Req = []
-        for date in response.xpath("//select[@id='WeekEndDate']/option/@value").extract():
-            Req.append(FormRequest(self.base_url[1], method="POST", formdata={ 'WeekEndDate':date, 'order':'Received Date' }, callback = self.parse_search_result))
-        return Req
+        weekly_dates = []
+        # for date in response.xpath("//select[@id='WeekEndDate']/option/@value").extract():
+        for result in self.create_dates(date(2012, 1, 1), date(2014, 11, 21), timedelta(days = 7)):
+            weekly_dates.append(result.strftime("%d-%m-%Y"))
+
+        for date in weekly_dates:
+            yield FormRequest(self.base_url[1], method="POST",
+                                formdata={ 'WeekEndDate':date, 'order':'Received Date' },
+                                callback = self.parse_search_result)
 
     def parse_search_result(self, response):
         #inspect_response(response)
