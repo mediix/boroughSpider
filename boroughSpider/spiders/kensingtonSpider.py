@@ -46,7 +46,7 @@ class kensingtonSpider(Spider):
         #inspect_response(response)
         weekly_dates = []
         # for date in response.xpath("//select[@id='WeekEndDate']/option/@value").extract():
-        for result in self.create_dates(date(2012, 1, 1), date(2014, 11, 21), timedelta(days = 7)):
+        for result in self.create_dates(date.today() - timedelta(days = 365), date(2014, 11, 21), timedelta(days = 7)):
             weekly_dates.append(result.strftime("%d-%m-%Y"))
 
         for date in weekly_dates:
