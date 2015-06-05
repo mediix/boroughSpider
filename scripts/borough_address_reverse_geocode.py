@@ -19,8 +19,7 @@ addrs = cursor.fetchall()
 addrs = { t[0]: t[1:] for t in addrs }
 addrs = { key: (str(value[0]) if value else None) for key, value in addrs.items() }
 
-#g = GoogleV3('AIzaSyCQqiEtxqZVu7LOVdH5GhLqzn0dKexxxeg')
-g = GoogleV3('AIzaSyBjF-Ks8Q2VoxczLdtQLEOlu2wL426yjgk')
+g = GoogleV3('replace-with-new-account')
 # address, (lat, lon) = g.geocode('15-16 Minories 62 Aldgate High Street London EC3 1AL', exactly_one=True)
 
 for key, value in addrs.items():
