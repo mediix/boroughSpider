@@ -17,10 +17,10 @@ class kensingtonSpider(Spider):
     pipeline = 'Kensington'
 
     def create_dates(self, start, end, delta):
-        curr = self.start
-        while curr < self.end:
+        curr = start
+        while curr < end:
             yield curr
-            curr += self.delta
+            curr += delta
 
     def create_item_class(self, class_name, field_list):
         fields = {}
@@ -44,14 +44,14 @@ class kensingtonSpider(Spider):
 
     def parse_date_result(self, response):
         #inspect_response(response)
-        weekly_dates = []
+        weeks = []
         # for date in response.xpath("//select[@id='WeekEndDate']/option/@value").extract():
-        for result in self.create_dates(date.today() - timedelta(days = 365), date(2014, 11, 21), timedelta(days = 7)):
-            weekly_dates.append(result.strftime("%d-%m-%Y"))
+        for result in self.create_dates(date(2014, 6, 6), date(2014, 11, 21), timedelta(days=7)):
+            weeks.append(result.strftime("%d-%m-%Y"))
 
-        for date in weekly_dates:
+        for item in weeks[::-1]:
             yield FormRequest(self.base_url[1], method="POST",
-                                formdata={ 'WeekEndDate':date, 'order':'Received Date' },
+                                formdata={ 'WeekEndDate':item, 'order':'Received Date' },
                                 callback = self.parse_search_result)
 
     def parse_search_result(self, response):

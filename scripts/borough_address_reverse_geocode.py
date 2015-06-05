@@ -10,23 +10,22 @@ conn = MySQLdb.connect(user='scraper',
                       use_unicode=True)
 cursor = conn.cursor()
 cursor.execute("""SELECT a.id, a.address
-                FROM addresses a
-                WHERE a.is_geocoded = 0
-                  AND (a.lat IS NULL OR a.lon IS NULL)
-                LIMIT 2500;
-                """)
+                  FROM addresses a
+                  WHERE a.is_geocoded = 0
+                    AND (a.lat IS NULL OR a.lon IS NULL)
+                  LIMIT 2500;""")
 addrs = cursor.fetchall()
 addrs = { t[0]: t[1:] for t in addrs }
 addrs = { key: (str(value[0]) if value else None) for key, value in addrs.items() }
 
-#g = GoogleV3('AIzaSyCQqiEtxqZVu7LOVdH5GhLqzn0dKexxxeg')
-g = GoogleV3('AIzaSyBjF-Ks8Q2VoxczLdtQLEOlu2wL426yjgk')
-# address, (lat, lon) = g.geocode('15-16 Minories 62 Aldgate High Street London EC3 1AL', exactly_one=True)
+g = GoogleV3('AIzaSyCQqiEtxqZVu7LOVdH5GhLqzn0dKexxxeg')
+# g = GoogleV3('AIzaSyBjF-Ks8Q2VoxczLdtQLEOlu2wL426yjgk')
+# g = GoogleV3('AIzaSyBVlA5XFIoywSQuFoZfGky7ITSLLC0VS1Q')
 
 for key, value in addrs.items():
   try:
     response = g.geocode(value, exactly_one=True)
-    if not response is None:
+    if response is not None:
       addr, (lat, lon) = response
       cursor.execute("""UPDATE addresses a
                   SET a.lat = %s, a.lon = %s, a.address_adjusted = %s

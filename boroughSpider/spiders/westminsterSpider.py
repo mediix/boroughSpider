@@ -7,6 +7,8 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 
+from datetime import date, datetime, timedelta
+
 class westminsterSpider(Spider):
   name = 'westSpider'
 
@@ -18,6 +20,12 @@ class westminsterSpider(Spider):
               "http://idoxpa.westminster.gov.uk"]
 
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
+
+  def create_dates(self, start, end, delta):
+    curr = start
+    while curr < end:
+      yield curr
+      curr += delta
 
   def create_item_class(self, class_name, field_list):
 
@@ -32,8 +40,13 @@ class westminsterSpider(Spider):
 
   def parse(self, response):
     # inspect_response(response)
+    months = []
+
+    for result in self.create_dates(date(2014, 6, 1), date(2015, 1, 1), timedelta(days = 31)):
+      months.append(result.strftime('%b %y'))
+
     parishes = response.xpath("//*[@id='parish']/option/@value").extract()[1:]
-    months = response.xpath("//*[@id='month']/option/@value").extract()
+    # months = response.xpath("//*[@id='month']/option/@value").extract()
     for parish in parishes:
       for month in months:
         yield FormRequest.from_response(response,

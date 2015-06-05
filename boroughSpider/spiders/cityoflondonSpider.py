@@ -7,6 +7,7 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 
+
 class cityOfLondonSpider(Spider):
   name = 'londSpider'
 

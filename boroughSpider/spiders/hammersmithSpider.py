@@ -7,6 +7,7 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 #
+from datetime import date, datetime, timedelta
 import time, json
 
 today = time.strftime("%x %X")
@@ -23,6 +24,12 @@ class hammSpider(Spider):
 
   start_urls = ["http://public-access.lbhf.gov.uk/online-applications/search.do?action=monthlyList"]
 
+  def create_dates(self, start, end, delta):
+    curr = start
+    while curr < end:
+        yield curr
+        curr += delta
+
   def create_item_class(self, class_name, field_list):
     fields = {}
     for field_name in field_list:
@@ -35,7 +42,13 @@ class hammSpider(Spider):
     return type(class_name, (DictItem,), {'fields':fields})
 
   def parse(self, response):
-    for month in response.xpath("//*[@id='month']/option/text()").extract():
+    #
+    months = []
+    for result in self.create_dates(date(2014, 1, 1), date(2014, 6, 30), timedelta(days = 31)):
+      months.append(result.strftime('%b %y'))
+
+    # for month in response.xpath("//*[@id='month']/option/text()").extract():
+    for month in months:
       yield FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
                         formdata = { 'month':str(month),
