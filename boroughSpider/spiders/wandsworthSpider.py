@@ -14,9 +14,9 @@ class wandsworthSpider(Spider):
 
   pipeline = 'Wandsworth'
 
-  base_url = ["http://ww3.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
+  base_url = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/Generic/"]
 
-  start_urls = ["http://ww3.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
+  start_urls = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/GeneralSearch.aspx"]
 
   def create_item_class(self, class_name, field_list):
     fields = {}
@@ -46,15 +46,18 @@ class wandsworthSpider(Spider):
       i+=1
 
     while (True):
-      applications_url = response.xpath("//td[@title='View Application Details']//a/@href").extract()
-      applications_url = [str(url).translate(None, delete) for url in applications_url]
-      for application in applications_url:
-        application_url = '{0}{1}'.format(self.base_url[0], application)
+      app_urls = response.xpath("//td[@title='View Application Details']//a/@href").extract()
+      app_urls = [str(url).translate(None, delete) for url in app_urls]
+      for url in app_urls:
+        application_url = '{0}{1}'.format(self.base_url[0], str(url))
         yield FormRequest(application_url, method="GET", callback = self.parse_applications)
-      next_page =  response.xpath("//div[@class='align_center']/a[preceding::span[@class='results_page_number_sel'] and not(@class='noborder')]/@href").extract()[0]
-      next_page = str(next_page).translate(None, delete)
-      next_page_url = '{0}{1}'.format(self.base_url[0], next_page)
-      yield FormRequest(next_page_url, method="GET", callback = self.parse_search_result)
+      try:
+        next_page =  response.xpath("//div[@class='align_center']/a[preceding::span[@class='results_page_number_sel'] and not(@class='noborder')]/@href").extract()[0]
+        next_page = str(next_page).translate(None, delete)
+        next_page_url = '{0}{1}'.format(self.base_url[0], next_page)
+        yield FormRequest(next_page_url, method="GET", callback = self.parse_search_result)
+      except:
+        pass
 
   def parse_applications(self, response):
     # inspect_response(response)
@@ -62,12 +65,14 @@ class wandsworthSpider(Spider):
     strat = (parse_html,)
 
     tab = extract(response.body, strategy=strat)
-
     table = tab.xpath("//div[@class='dataview']//ul//li")
-
     table = [[str(text.strip().encode('utf-8')).strip() for text in elem.itertext()] for elem in table]
     table = [[x for x in elem if x != ''] for elem in table]
-    table = { t[0]:t[1:] for t in table }
+
+    # import pdb; pdb.set_trace()
+
+    table = { (t[0] if t else ''): (t[1:] if t else '') for t in table }
+    table.pop('', None)
     table = { key.replace(' ', '_').lower(): (value[0] if value else '') for key, value in table.items() }
 
     wandsworthItem = self.create_item_class('wandsworthItem', table.keys())
@@ -87,7 +92,7 @@ class wandsworthSpider(Spider):
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       item['documents_url'] = documents_url
     except:
-      item['documents_url'] = "n/a"
+      item['documents_url'] = 'n/a'
 
     import pdb; pdb.set_trace()
     # return item

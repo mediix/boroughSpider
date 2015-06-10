@@ -12,7 +12,7 @@ BOT_NAME = 'boroughSpider'
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
-DOWNLOAD_DELAY = 1.50
+# DOWNLOAD_DELAY = 0.50
 
 COOKIES_ENABLED = True
 COOKIES_DEBUG = True

@@ -10,23 +10,16 @@ from dateutil import parser
 from datetime import date, datetime, timedelta
 import time, json
 
-class HammersmithSpider(Spider):
-  name = 'hammSpider'
+class LambethSpider(Spider):
+  name = 'lambSpider'
 
-  domain = 'ibhf.gov.uk'
+  domain = 'lambeth.gov.uk'
 
   pipeline = 'Hammersmith'
 
-  base_url = ["http://public-access.lbhf.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
-              "http://public-access.lbhf.gov.uk"]
+  base_url = ["http://planning.lambeth.gov.uk"]
 
-  start_urls = ["http://public-access.lbhf.gov.uk/online-applications/search.do?action=monthlyList"]
-
-  def create_dates(self, start, end, delta):
-    curr = start
-    while curr < end:
-        yield curr
-        curr += delta
+  start_urls = ["http://planning.lambeth.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def create_item_class(self, class_name, field_list):
     fields = {}
@@ -40,40 +33,55 @@ class HammersmithSpider(Spider):
     return type(class_name, (DictItem,), {'fields':fields})
 
   def parse(self, response):
-    #
-    months = []
-    for result in self.create_dates(date(2014, 1, 1), date(2014, 6, 30), timedelta(days = 31)):
-      months.append(result.strftime('%b %y'))
-
-    # for month in response.xpath("//*[@id='month']/option/text()").extract():
-    for month in months:
-      yield FormRequest.from_response(response,
+  	# inspect_response(response)
+  	for month in response.xpath("//*[@id='month']/option/text()").extract():
+  		yield FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
                         formdata = { 'month':str(month),
-                                     'dateType': 'DC_Validated',
+                                     'dateType': 'DC_Decided',
                                      'searchType':'Application' },
                         callback = self.parse_results)
 
   def parse_results(self, response):
-    try:
-      num_of_pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-                                    /text()[(preceding-sibling::strong)]").extract()[0]
-      num_of_pages = int(num_of_pages.split()[1])
-      num_of_pages = (num_of_pages/10) + (num_of_pages % 10 > 0)
-      #
-      for page_num in xrange(1, num_of_pages+1):
-        page_url = '{0}{1}'.format(self.base_url[0], page_num)
-        yield FormRequest(page_url, method="GET", callback = self.parse_items)
-    except:
-      for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-        item_url = '{0}{1}'.format(self.base_url[1], url)
-        yield FormRequest(item_url, method="GET", callback = self.parse_summary)
-    finally:
-      pass
+  	# inspect_response(response)
+  	try:
+  		yield FormRequest.from_response(response,
+                          formname = 'searchCriteriaForm',
+                          formdata = { 'searchCriteria.page':'1',
+                                       'action':'page',
+                                       'orderBy':'DateReceived',
+                                       'orderByDirection':'Descending',
+                                       'searchCriteria.resultsPerPage':'100' },
+                          callback = self.parse_long_results)
+  	except:
+  		yield FormRequest(response.url, method="GET", callback = self.parse_long_results)
+  	finally:
+  		pass
+
+  def parse_long_results(self, response):
+  	# inspect_response(response)
+
+  	if response.xpath("//*[@class='pager top']/span[@class='showing']"):
+  		for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+  			item_url = '{0}{1}'.format(self.base_url[0], 	str(url))
+  			yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+
+     	for href in response.xpath("//p[@class='pager top']/a[@class='page']/@href").extract():
+     		nxt_url = '{0}{1}'.format(self.base_url[0], str(href))
+     		yield FormRequest(nxt_url, method="GET", callback = self.parse_items)
+  	else:
+  		try:
+  			for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+  				item_url = '{0}{1}'.format(self.base_url[0], str(url))
+  				yield FormRequest(item_url, method="GET", callback = self.parse_items)
+  		except:
+  			pass
 
   def parse_items(self, response):
+  	# inspect_response(response)
+
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-      item_url = '{0}{1}'.format(self.base_url[1], url)
+      item_url = '{0}{1}'.format(self.base_url[0], str(url))
       yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
   def parse_summary(self, response):
@@ -85,7 +93,7 @@ class HammersmithSpider(Spider):
     table = list(prototypes.convert_table(tab.xpath("//table")))[0]
 
     further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
-    further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url)
+    further_info_url = '{0}{1}'.format(self.base_url[0], str(further_info_url))
     request = FormRequest(further_info_url, method = "GET",
                           meta = {'table':table},
                           callback = self.parse_further_info)
@@ -102,7 +110,7 @@ class HammersmithSpider(Spider):
     table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
 
     important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
-    important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
+    important_dates_url = '{0}{1}'.format(self.base_url[0], str(important_dates_url))
     request = FormRequest(important_dates_url, method = "GET",
                           meta = {'table':table},
                           callback = self.parse_important_dates)
@@ -120,7 +128,7 @@ class HammersmithSpider(Spider):
 
     if response.xpath("//*[@id='tab_constraints']/@href").extract():
       constraint_url = response.xpath("//*[@id='tab_constraints']/@href").extract()[0]
-      constraint_url = '{0}{1}'.format(self.base_url[1], constraint_url)
+      constraint_url = '{0}{1}'.format(self.base_url[0], str(constraint_url))
       request = FormRequest(constraint_url, method = "GET",
                             meta = {'table':table},
                             callback = self.parse_constraints)
@@ -128,9 +136,9 @@ class HammersmithSpider(Spider):
     else:
       table = {key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items()}
 
-      hammersmithItem = self.create_item_class('hammersmithItem', table.keys())
+      lambethItem = self.create_item_class('lambethItem', table.keys())
 
-      item = hammersmithItem()
+      item = lambethItem()
 
       for key, value in table.items():
         try:
@@ -143,11 +151,11 @@ class HammersmithSpider(Spider):
         except:
           item[key] = value
 
-      item['borough'] = "Hammersmith & Fulham"
+      item['borough'] = "Lambeth"
       item['domain'] = self.domain
       try:
-        documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-        documents_url = '{0}{1}'.format(self.base_url[1], str(documents_url))
+        documents_url = response.xpath("//*[@id='tab_externalDocuments']/@href").extract()[0]
+        documents_url = '{0}{1}'.format(self.base_url[0], str(documents_url))
         item['documents_url'] = documents_url
       except:
         item['documents_url'] = "n/a"
@@ -169,9 +177,9 @@ class HammersmithSpider(Spider):
 
     table = {key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items()}
 
-    hammersmithItem = self.create_item_class('hammersmithItem', table.keys())
+    lambethItem = self.create_item_class('lambethItem', table.keys())
 
-    item = hammersmithItem()
+    item = lambethItem()
 
     for key, value in table.items():
       try:
@@ -185,11 +193,11 @@ class HammersmithSpider(Spider):
         item[key] = value
 
     item['constraints'] = json_dict
-    item['borough'] = "Hammersmith & Fulham"
+    item['borough'] = "Lambeth"
     item['domain'] = self.domain
     try:
-      documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-      documents_url = '{0}{1}'.format(self.base_url[1], str(documents_url))
+      documents_url = response.xpath("//*[@id='tab_externalDocuments']/@href").extract()[0]
+      documents_url = '{0}{1}'.format(self.base_url[0], str(documents_url))
       item['documents_url'] = documents_url
     except:
       item['documents_url'] = 'n/a'
