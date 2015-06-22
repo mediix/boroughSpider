@@ -23,6 +23,7 @@ Scraper's google account:
   scraper.gvhomes@gmail.com
   pass: scraper12345678
 '''
+
 g = GoogleV3('AIzaSyCaENUu85uuSC6h8-1DhJ5H29R0O0WrFqA')
 
 for key, value in addrs.items():
