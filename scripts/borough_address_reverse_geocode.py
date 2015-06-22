@@ -24,7 +24,6 @@ Scraper's google account:
   pass: scraper12345678
 '''
 g = GoogleV3('AIzaSyCaENUu85uuSC6h8-1DhJ5H29R0O0WrFqA')
-# address, (lat, lon) = g.geocode('15-16 Minories 62 Aldgate High Street London EC3 1AL', exactly_one=True)
 
 for key, value in addrs.items():
   try:

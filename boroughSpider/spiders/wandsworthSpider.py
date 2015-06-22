@@ -69,8 +69,6 @@ class wandsworthSpider(Spider):
     table = [[str(text.strip().encode('utf-8')).strip() for text in elem.itertext()] for elem in table]
     table = [[x for x in elem if x != ''] for elem in table]
 
-    # import pdb; pdb.set_trace()
-
     table = { (t[0] if t else ''): (t[1:] if t else '') for t in table }
     table.pop('', None)
     table = { key.replace(' ', '_').lower(): (value[0] if value else '') for key, value in table.items() }
