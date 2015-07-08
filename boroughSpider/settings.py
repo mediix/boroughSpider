@@ -21,11 +21,12 @@ COOKIES_DEBUG = True
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
 
 ITEM_PIPELINES = {
-    'boroughSpider.pipelines.Westminster',
-    'boroughSpider.pipelines.Hammersmith',
-    'boroughSpider.pipelines.Kensington',
-    'boroughSpider.pipelines.CityOfLondon',
-    'boroughSpider.pipelines.Wandsworth'
+    'boroughSpider.pipelines.Westminster': None,
+    'boroughSpider.pipelines.Hammersmith': None,
+    'boroughSpider.pipelines.Kensington': None,
+    'boroughSpider.pipelines.CityOfLondon': None,
+    'boroughSpider.pipelines.Wandsworth': None,
+    'boroughSpider.pipelines.Tribunal': None
 }
 
 # DOWNLOADER_MIDDLEWARES = {
