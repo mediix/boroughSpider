@@ -2,6 +2,7 @@ from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
 from scrapy.item import DictItem, Field
+from bs4 import BeautifulSoup
 
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
@@ -16,10 +17,6 @@ class tribunalSpider(Spider):
 		fields = {}
 		for field_name in field_list:
 			fields[field_name] = Field()
-
-		fields.update({'domain': Field()})
-		fields.update({'borough': Field()})
-		fields.update({'documents_url': Field()})
 		return type(class_name, (DictItem,), {'fields':fields})
 
 	def parse(self, response):
@@ -30,27 +27,30 @@ class tribunalSpider(Spider):
 		yield FormRequest(url, method="GET", callback=self.parse_result)
 
 	def parse_result(self, response):
-		strat = (parse_html,)
+		# inspect_response(response, self)
 
-		tab = extract(response.body, strategy=strat)
-		table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+		soup = BeautifulSoup(response.body, 'html.parser')
+		table = soup.find('table', {'class': 'lvtFullTable'})
+		keys = []
+		for th in table.findAll('tr')[1]:
+			keys.append(str(th.get_text(strip=True)).replace(' ', '_'))
 
-		table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
+		tribunalItem = self.create_item_class('tribunalItem', keys)
+		item = tribunalItem()
 
-		TribunalItem = self.create_item_class('TribunalItem', table.keys())
+		items = []
+		vals = []
+		for tr in table.findAll('tr'):
+			for td in tr.findAll('td'):
+				if td.find('a'):
+					vals.append('{0}{1}'.format(self.base_url, td.find('a').get('href').encode('utf-8').replace('../', '')))
+			vals.append(td.get_text(strip=True).encode('ascii', 'ignore'))
 
-		item = TribunalItem()
-
-		for key, value in table.items():
-			try:
-				if value == '':
-					item[key] = 'EMPTY'
-				else:
-					item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
-			except:
+			d = dict(zip(keys, vals))
+			for key, value in d.items():
 				item[key] = value
+			items.append(item)
 
 		import pdb; pdb.set_trace()
 
-		# return item
-
+		# return items
