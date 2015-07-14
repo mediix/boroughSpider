@@ -8,6 +8,7 @@ from scrapy import log
 import MySQLdb
 import functools
 import sys
+import re
 
 def check_spider_pipeline(process_item_method):
 
@@ -441,17 +442,3 @@ class Wandsworth(object):
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             return item
-
-class Tribunal(object):
-
-    def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        # self.default = 'n/a'
-
-    @check_spider_pipeline
-    def process_item(self, item, spider):
-        self.cursor.execute("SHOW COLUMNS FROM leasehold")
-        cols = self.cursor.fetchall()
-
-

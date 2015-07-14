@@ -26,8 +26,9 @@ ITEM_PIPELINES = {
     'boroughSpider.pipelines.Kensington': None,
     'boroughSpider.pipelines.CityOfLondon': None,
     'boroughSpider.pipelines.Wandsworth': None,
-    'boroughSpider.pipelines.Tribunal': None
 }
+
+# FILES_STORE = '/home/medi/UK_data/Medi/Tribunal/'
 
 # DOWNLOADER_MIDDLEWARES = {
 #     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
