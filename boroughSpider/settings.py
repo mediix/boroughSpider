@@ -12,7 +12,7 @@ BOT_NAME = 'boroughSpider'
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
-# DOWNLOAD_DELAY = 0.50
+DOWNLOAD_DELAY = 0.25
 
 COOKIES_ENABLED = True
 COOKIES_DEBUG = True
@@ -21,11 +21,12 @@ COOKIES_DEBUG = True
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
 
 ITEM_PIPELINES = {
-    'boroughSpider.pipelines.Westminster': None,
-    'boroughSpider.pipelines.Hammersmith': None,
-    'boroughSpider.pipelines.Kensington': None,
-    'boroughSpider.pipelines.CityOfLondon': None,
-    'boroughSpider.pipelines.Wandsworth': None,
+    'boroughSpider.pipelines.Westminster',
+    'boroughSpider.pipelines.Hammersmith',
+    'boroughSpider.pipelines.Kensington',
+    'boroughSpider.pipelines.CityOfLondon',
+    'boroughSpider.pipelines.Wandsworth',
+    # 'boroughSpider.pipelines.Generic',
 }
 
 # FILES_STORE = '/home/medi/UK_data/Medi/Tribunal/'

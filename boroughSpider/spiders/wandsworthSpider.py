@@ -9,14 +9,10 @@ from dateutil import parser
 
 class wandsworthSpider(Spider):
   name = 'wandSpider'
-
   domain = 'http://ww3.wandsworth.gov.uk'
-
   pipeline = 'Wandsworth'
-
-  base_url = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/Generic/"]
-
-  start_urls = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/GeneralSearch.aspx"]
+  base_url = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
+  start_urls = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
 
   def create_item_class(self, class_name, field_list):
     fields = {}
@@ -33,11 +29,11 @@ class wandsworthSpider(Spider):
                                       formname = 'Template',
                                       formdata = { 'cboSelectDateValue':'DATE_RECEIVED',
                                                    'rbGroup':'rbMonth',
-                                                   'cboMonths':'5' },
+                                                   'cboMonths':'1' },
                                       callback = self.parse_search_result)]
 
   def parse_search_result(self, response):
-    # inspect_response(response)
+    inspect_response(response, self)
 
     delete = ""
     i = 1
@@ -71,7 +67,8 @@ class wandsworthSpider(Spider):
 
     table = { (t[0] if t else ''): (t[1:] if t else '') for t in table }
     table.pop('', None)
-    table = { key.replace(' ', '_').lower(): (value[0] if value else '') for key, value in table.items() }
+    chk = lambda key: key.replace(' ', '_').replace('_/_', '_').replace('?', '')
+    table = { chk(key).lower(): (value[0] if value else '') for key, value in table.items() }
 
     wandsworthItem = self.create_item_class('wandsworthItem', table.keys())
 
@@ -92,5 +89,4 @@ class wandsworthSpider(Spider):
     except:
       item['documents_url'] = 'n/a'
 
-    # import pdb; pdb.set_trace()
     # return item

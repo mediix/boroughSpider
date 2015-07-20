@@ -42,7 +42,7 @@ class HammersmithSpider(Spider):
   def parse(self, response):
     #
     months = []
-    for result in self.create_dates(date(2014, 1, 1), date(2014, 6, 30), timedelta(days = 31)):
+    for result in self.create_dates(date(2013, 1, 1), date.today(), timedelta(days = 31)):
       months.append(result.strftime('%b %y'))
 
     # for month in response.xpath("//*[@id='month']/option/text()").extract():

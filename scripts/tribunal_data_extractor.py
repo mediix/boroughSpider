@@ -75,18 +75,19 @@ def write(link, cookie):
 		f.close()
 	print "Download and write data for %s Completed" % (base+str(link))
 
-base = 'http://www.lease-advice.org/lvtdecisions/'
-base_1 = 'http://www.lease-advice.org/'
-files_store = '/home/medi/UK_data/Medi/Tribunal/'
+if __name__ == "__main__":
+	base = 'http://www.lease-advice.org/lvtdecisions/'
+	base_1 = 'http://www.lease-advice.org/'
+	files_store = '/home/medi/UK_data/Medi/Tribunal/'
 
-r = requests.get('http://www.lease-advice.org/lvtdecisions/tables.asp?table=3')
-strat = (parse_html,)
-tab = extract(r.content, strategy=strat)
-links = tab.xpath("//p[text()='View decision numbers: ']//@href")
+	r = requests.get('http://www.lease-advice.org/lvtdecisions/tables.asp?table=3')
+	strat = (parse_html,)
+	tab = extract(r.content, strategy=strat)
+	links = tab.xpath("//p[text()='View decision numbers: ']//@href")
 
-for link in links:
-	print base+link
-	try:
-		write(base+link, r.cookies.get_dict())
-	except:
-		pass
+	for link in links:
+		print base+link
+		try:
+			write(base+link, r.cookies.get_dict())
+		except:
+			pass
