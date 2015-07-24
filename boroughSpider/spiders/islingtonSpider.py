@@ -2,17 +2,18 @@ from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
 from scrapy.item import DictItem, Field
-
+#
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 
-class wandsworthSpider(Spider):
-  name = 'wandSpider'
-  domain = 'http://ww3.wandsworth.gov.uk'
+class IslingtonSpider(Spider):
+  name = 'isliSpider'
+  domain = 'http://www.islington.gov.uk'
   pipeline = 'Wandsworth'
-  base_url = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
-  start_urls = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
+  base_url = ["http://planning.islington.gov.uk/Northgate/PlanningExplorer/Generic/",
+              "http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
+  start_urls = ["http://www.islington.gov.uk/services/planning/applications/comment/Pages/planning-search.aspx"]
 
   def create_item_class(self, class_name, field_list):
     fields = {}
@@ -24,24 +25,32 @@ class wandsworthSpider(Spider):
     fields.update({'documents_url': Field()})
     return type(class_name, (DictItem,), {'fields':fields})
 
+  # def parse(self, response):
+  #   return [FormRequest.from_response(response,
+  #                                     formname = 'M3Form',
+  #                                     formdata = { 'cboSelectDateValue':'DATE_RECEIVED',
+  #                                                  'rbGroup':'rbMonth',
+  #                                                  'cboMonths':'1' },
+  #                                     callback = self.parse_search_result)]
   def parse(self, response):
-    return [FormRequest.from_response(response,
-                                      formname = 'Template',
-                                      formdata = { 'cboSelectDateValue':'DATE_RECEIVED',
-                                                   'rbGroup':'rbMonth',
-                                                   'cboMonths':'12' },
-                                      callback = self.parse_search_result)]
+    return [FormRequest(self.base_url[1], method="POST",
+              formdata = { 'cboSelectDateValue':'DATE_RECEIVED',
+                           'rbGroup':'rbMonth',
+                           'cboMonths':'12' },
+              callback = self.parse_search_result)]
 
   def parse_search_result(self, response):
-    # inspect_response(response, self)
-
+    inspect_response(response, self)
+    #
     delete = ""
     i = 1
     while (i < 0x20):
       delete += chr(i)
       i+=1
 
-    while (True):
+    # while (True):
+    if response.xpath("//div[@class='align_center']/a[preceding::span[@class='results_page_number_sel'] and \
+      not(@class='noborder')]/@href").extract():
       app_urls = response.xpath("//td[@title='View Application Details']//a/@href").extract()
       app_urls = [str(url).translate(None, delete) for url in app_urls]
       for url in app_urls:
@@ -54,6 +63,12 @@ class wandsworthSpider(Spider):
         yield FormRequest(next_page_url, method="GET", callback = self.parse_search_result)
       except:
         pass
+    else:
+      app_urls = response.xpath("//td[@title='View Application Details']//a/@href").extract()
+      app_urls = [str(url).translate(None, delete) for url in app_urls]
+      for url in app_urls:
+        application_url = '{0}{1}'.format(self.base_url[0], str(url))
+        yield FormRequest(application_url, method="GET", callback = self.parse_applications)
 
   def parse_applications(self, response):
     # inspect_response(response)
@@ -70,9 +85,8 @@ class wandsworthSpider(Spider):
     chk = lambda key: key.replace(' ', '_').replace('_/_', '_').replace('?', '')
     table = { chk(key).lower(): (value[0] if value else '') for key, value in table.items() }
 
-    wandsworthItem = self.create_item_class('wandsworthItem', table.keys())
-
-    item = wandsworthItem()
+    islingtonItem = self.create_item_class('islingtonItem', table.keys())
+    item = islingtonItem()
 
     for key, value in table.items():
       try:
@@ -80,10 +94,10 @@ class wandsworthSpider(Spider):
       except:
         item[key] = 'n/a'
 
-    item['borough'] = "Wandsworth"
+    item['borough'] = "Islington"
     item['domain'] = self.domain
     try:
-      documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
+      documents_url = response.xpath("//*[@title='Link to related documents']/@href").extract()[0]
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       item['documents_url'] = documents_url
     except:

@@ -12,7 +12,7 @@ BOT_NAME = 'boroughSpider'
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
-DOWNLOAD_DELAY = 0.25
+# DOWNLOAD_DELAY = 0.25
 
 COOKIES_ENABLED = True
 COOKIES_DEBUG = True
@@ -26,10 +26,11 @@ ITEM_PIPELINES = {
     'boroughSpider.pipelines.Kensington',
     'boroughSpider.pipelines.CityOfLondon',
     'boroughSpider.pipelines.Wandsworth',
-    # 'boroughSpider.pipelines.Generic',
+    'boroughSpider.pipelines.Southwark',
+    'boroughSpider.pipelines.TowerHamlets'
 }
 
-# FILES_STORE = '/home/medi/UK_data/Medi/Tribunal/'
+USER_AGENT = "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36"
 
 # DOWNLOADER_MIDDLEWARES = {
 #     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,

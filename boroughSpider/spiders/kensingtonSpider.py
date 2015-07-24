@@ -49,9 +49,9 @@ class kensingtonSpider(Spider):
         for result in self.create_dates(date(2014, 6, 6), date(2014, 11, 21), timedelta(days=7)):
             weeks.append(result.strftime("%d-%m-%Y"))
 
-        for item in weeks[::-1]:
+        for week in weeks[::-1]:
             yield FormRequest(self.base_url[1], method="POST",
-                                formdata={ 'WeekEndDate':item, 'order':'Received Date' },
+                                formdata={ 'WeekEndDate':week, 'order':'Received Date' },
                                 callback = self.parse_search_result)
 
     def parse_search_result(self, response):

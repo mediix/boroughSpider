@@ -41,10 +41,10 @@ class SouthwarkSpider(Spider):
     for result in self.create_dates(date(2013, 1, 1), date.today(), timedelta(days = 31)):
       months.append(result.strftime('%b %y'))
 
-    # for month in months:
-    yield FormRequest.from_response(response,
+    for month in months[14:-13]:
+      yield FormRequest.from_response(response,
     			formname = 'searchCriteriaForm',
-    			formdata = { 'month':'Jul 15',
+    			formdata = { 'month':str(month),
     							 		 'dateType': 'DC_Validated',
     							 		 'searchType':'Application' },
     			callback = self.parse_results)
@@ -84,7 +84,7 @@ class SouthwarkSpider(Spider):
         pass
 
   def parse_items(self, response):
-    inspect_response(response, self)
+    # inspect_response(response, self)
     #
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
       item_url = '{0}{1}'.format(self.base_url[1], str(url))
@@ -106,17 +106,35 @@ class SouthwarkSpider(Spider):
 
   def parse_further_info(self, response):
     # inspect_response(response)
+
     table = response.meta['table']
 
     strat = (parse_html,)
 
     tab = extract(response.body, strategy=strat)
     table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
-    table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
 
-    cityoflondonItem = self.create_item_class('cityoflondonItem', table.keys())
+    important_dates_url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
+    important_dates_url = '{0}{1}'.format(self.base_url[1], important_dates_url)
+    request = FormRequest(important_dates_url, method = "GET",
+                          meta = {'table':table},
+                          callback = self.parse_important_dates)
+    return request
 
-    item = cityoflondonItem()
+  def parse_important_dates(self, response):
+    #inspect_response(response)
+
+    table = response.meta['table']
+
+    strat = (parse_html,)
+
+    tab = extract(response.body, strategy=strat)
+    table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
+
+    table = {key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items()}
+
+    southwarkItem = self.create_item_class('southwarkItem', table.keys())
+    item = southwarkItem()
 
     for key, value in table.items():
       try:
@@ -128,12 +146,11 @@ class SouthwarkSpider(Spider):
           item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
       except:
         item[key] = value
-
-    item['borough'] = "City of London"
+    item['borough'] = "Southwark"
     item['domain'] = self.domain
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+      documents_url = '{0}{1}'.format(self.base_url[1], str(documents_url))
       item['documents_url'] = documents_url
     except:
       item['documents_url'] = "n/a"
