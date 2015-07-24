@@ -5,18 +5,17 @@ from bs4 import BeautifulSoup
 from scrapy.item import DictItem, Field
 from libextract import extract
 from libextract.tabular import parse_html
+from lxml.html import open_in_browser
 
-def write(link, cookie):
-	'''
-	link: html link to parse data from
-	cookie: retrieved cookie
-	returns: writes data into the database
-	and downloads the target PDF
-	'''
-	ln = requests.get(link, cookies=cookie)
-
+def write(link):
+'''
+link: html link to parse data from
+cookie: retrieved cookie
+returns: writes data into the database
+and downloads the target PDF
+'''
+	ln = requests.get(base+links[11])
 	soup = BeautifulSoup(ln.content, 'html.parser')
-
 	table = soup.find('table', {'class': 'lvtFullTable'})
 
 	keys = []
@@ -26,13 +25,11 @@ def write(link, cookie):
 		else:
 			keys.append(str(th.get_text(strip=True)).replace(' ', '_').replace('%', 'percentage'))
 
-
 	items = []
 	for tr in table.findAll('tr'):
 		vals = []
 		for td in tr.findAll('td'):
 			vals.append(td.get_text(strip=True).encode('ascii', 'ignore'))
-
 		dic = dict(zip(keys, vals))
 		try:
 			dic.update({'Download': str(base_1 + tr.find('a').get('href').replace('../', ''))})
@@ -40,17 +37,16 @@ def write(link, cookie):
 			dic.update({'Download': 'N/A'})
 		items.append(dic)
 
-	con = MySQLdb.connect(user='mehdi',
-		passwd='pashmak.mN2',
-		db='research_uk_public_data',
+	con = MySQLdb.connect(user='scraper',
+		passwd='12345678',
+		db='research_uk',
 		host='granweb01',
 		charset="utf8",
 		use_unicode=True)
 	cur = con.cursor()
 
-	cur.execute("SHOW COLUMNS FROM leasehold")
+	cur.execute("SHOW COLUMNS FROM leaseholds")
 	cols = cur.fetchall()
-
 	chk = lambda col: re.match(r'^\w+$', col)
 	cols = [str(x[0]) for x in cols][1:]
 	colnames = ','.join("`%s`" %col if not chk(col) else '%s' %col for col in cols)
@@ -79,15 +75,13 @@ if __name__ == "__main__":
 	base = 'http://www.lease-advice.org/lvtdecisions/'
 	base_1 = 'http://www.lease-advice.org/'
 	files_store = '/home/medi/UK_data/Medi/Tribunal/'
-
 	r = requests.get('http://www.lease-advice.org/lvtdecisions/tables.asp?table=3')
 	strat = (parse_html,)
 	tab = extract(r.content, strategy=strat)
 	links = tab.xpath("//p[text()='View decision numbers: ']//@href")
-
-	for link in links:
-		print base+link
+	for link in links[10:11]:
+		print base + link
 		try:
-			write(base+link, r.cookies.get_dict())
+			write(base+link)
 		except:
 			pass

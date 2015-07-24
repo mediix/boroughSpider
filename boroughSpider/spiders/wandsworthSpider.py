@@ -10,7 +10,7 @@ from dateutil import parser
 class wandsworthSpider(Spider):
   name = 'wandSpider'
   domain = 'http://ww3.wandsworth.gov.uk'
-  pipeline = 'Wandsworth'
+  # pipeline = 'Wandsworth'
   base_url = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
   start_urls = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
 
@@ -41,7 +41,9 @@ class wandsworthSpider(Spider):
       delete += chr(i)
       i+=1
 
-    while (True):
+    # while (True):
+    if response.xpath("//div[@class='align_center']/a[preceding::span[@class='results_page_number_sel'] and \
+      not(@class='noborder')]/@href").extract():
       app_urls = response.xpath("//td[@title='View Application Details']//a/@href").extract()
       app_urls = [str(url).translate(None, delete) for url in app_urls]
       for url in app_urls:
@@ -54,6 +56,12 @@ class wandsworthSpider(Spider):
         yield FormRequest(next_page_url, method="GET", callback = self.parse_search_result)
       except:
         pass
+    else:
+      app_urls = response.xpath("//td[@title='View Application Details']//a/@href").extract()
+      app_urls = [str(url).translate(None, delete) for url in app_urls]
+      for url in app_urls:
+        application_url = '{0}{1}'.format(self.base_url[0], str(url))
+        yield FormRequest(application_url, method="GET", callback = self.parse_applications)
 
   def parse_applications(self, response):
     # inspect_response(response)
