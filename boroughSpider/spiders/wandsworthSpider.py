@@ -10,7 +10,7 @@ from dateutil import parser
 class wandsworthSpider(Spider):
   name = 'wandSpider'
   domain = 'http://ww3.wandsworth.gov.uk'
-  # pipeline = 'Wandsworth'
+  pipeline = 'Wandsworth'
   base_url = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
   start_urls = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
 
