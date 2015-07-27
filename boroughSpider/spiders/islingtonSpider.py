@@ -13,7 +13,8 @@ class IslingtonSpider(Spider):
   pipeline = 'Wandsworth'
   base_url = ["http://planning.islington.gov.uk/Northgate/PlanningExplorer/Generic/",
               "http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
-  start_urls = ["http://www.islington.gov.uk/services/planning/applications/comment/Pages/planning-search.aspx"]
+  # start_urls = ["http://www.islington.gov.uk/services/planning/applications/comment/Pages/planning-search.aspx"]
+  start_urls = ["http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
 
   def create_item_class(self, class_name, field_list):
     fields = {}
@@ -25,19 +26,13 @@ class IslingtonSpider(Spider):
     fields.update({'documents_url': Field()})
     return type(class_name, (DictItem,), {'fields':fields})
 
-  # def parse(self, response):
-  #   return [FormRequest.from_response(response,
-  #                                     formname = 'M3Form',
-  #                                     formdata = { 'cboSelectDateValue':'DATE_RECEIVED',
-  #                                                  'rbGroup':'rbMonth',
-  #                                                  'cboMonths':'1' },
-  #                                     callback = self.parse_search_result)]
   def parse(self, response):
-    return [FormRequest(self.base_url[1], method="POST",
-              formdata = { 'cboSelectDateValue':'DATE_RECEIVED',
-                           'rbGroup':'rbMonth',
-                           'cboMonths':'12' },
-              callback = self.parse_search_result)]
+    return FormRequest.from_response(response,
+                formname='Template',
+                formdata={'cboSelectDateValue':'DATE_RECEIVED',
+                          'rbGroup':'rbMonth',
+                          'cboMonths':'1'},
+                callback=self.parse_search_result)
 
   def parse_search_result(self, response):
     inspect_response(response, self)

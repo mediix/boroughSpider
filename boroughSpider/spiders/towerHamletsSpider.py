@@ -14,7 +14,8 @@ class towerHamletsSpider(Spider):
   pipeline = 'TowerHamlets'
   domain = 'http://www.towerhamlets.gov.uk'
   base_url = ["http://planreg.towerhamlets.gov.uk"]
-  start_urls = ["http://planreg.towerhamlets.gov.uk/WAM/monthlyDecisions.do?action=init"]
+  # start_urls = ["http://planreg.towerhamlets.gov.uk/WAM/monthlyDecisions.do?action=init"]
+  start_urls = ["http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
 
   def create_dates(self, start, end, delta):
     curr = start
@@ -36,17 +37,16 @@ class towerHamletsSpider(Spider):
     # inspect_response(response)
     months = []
 
-    for result in self.create_dates(date(2013, 1, 1), date.today(), timedelta(days = 31)):
-      months.append(result.strftime('%b %y'))
+    # for result in self.create_dates(date(2013, 1, 1), date.today(), timedelta(days = 31)):
+    #   months.append(result.strftime('%b %y'))
 
     # for month in months:
-    return [FormRequest.from_response(response,
-                        formname = 'searchCaseFileTypeForm',
-                        formdata = { 'areaCode':'%',
-                                     'sortOrder':'3',
-                                     'endDate':'0',
-                                     'decisionType':'%' },
-                        callback = self.parse_results)]
+    return FormRequest.from_response(response,
+                formname='Template',
+                formdata={'cboSelectDateValue':'DATE_RECEIVED',
+                          'rbGroup':'rbMonth',
+                          'cboMonths':'1'},
+                callback=self.parse_search_result)
 
   def parse_results(self, response):
     # inspect_response(response, self)
