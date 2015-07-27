@@ -82,14 +82,15 @@ class HackneySpider(Spider):
     chk = lambda key: key.replace(' ', '_').replace('_/_', '_').replace('?', '')
     table = { chk(key).lower(): (value[0] if value else '') for key, value in table.items() }
 
-    if response.xpath("//*[text()='Application Constraints']").extract():
-      const_url = self.base_url[0] + \
-        response.xpath("//*[text()='Application Constraints']/@href").extract()[0].encode('utf-8', 'ignore')
-      if response.xpath("//*[text()='Application Dates']").extract():
+    if response.xpath("//*[text()='Application Constraints']").extract() or \
+        response.xpath("//*[text()='Application Dates']").extract():
+      try:
+        const_url = self.base_url[0] + \
+          response.xpath("//*[text()='Application Constraints']/@href").extract()[0].encode('utf-8', 'ignore')
         dates_url = self.base_url[0] + \
           response.xpath("//*[text()='Application Dates']/@href").extract()[0].encode('utf-8', 'ignore')
-        return FormRequest(dates_url, method="GET", meta={'url': const_url, 'table':table}, callback = self.parse_dates)
-      else:
+        return FormRequest(dates_url, method="GET", meta={'url': [const_url, dates_url], 'table':table}, callback = self.parse_dates)
+      except:
         return FormRequest(const_url, method="GET", meta={'table':table}, callback=self.parse_constraints)
     else:
       hackneyItem = self.create_item_class('hackneyItem', table.keys())
