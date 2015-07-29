@@ -10,10 +10,9 @@ from dateutil import parser
 class IslingtonSpider(Spider):
   name = 'isliSpider'
   domain = 'http://www.islington.gov.uk'
-  pipeline = 'Wandsworth'
+  pipeline = 'Islington'
   base_url = ["http://planning.islington.gov.uk/Northgate/PlanningExplorer/Generic/",
               "http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
-  # start_urls = ["http://www.islington.gov.uk/services/planning/applications/comment/Pages/planning-search.aspx"]
   start_urls = ["http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
 
   def create_item_class(self, class_name, field_list):
@@ -31,11 +30,11 @@ class IslingtonSpider(Spider):
                 formname='Template',
                 formdata={'cboSelectDateValue':'DATE_RECEIVED',
                           'rbGroup':'rbMonth',
-                          'cboMonths':'1'},
+                          'cboMonths':'12'},
                 callback=self.parse_search_result)
 
   def parse_search_result(self, response):
-    inspect_response(response, self)
+    # inspect_response(response, self)
     #
     delete = ""
     i = 1
@@ -43,9 +42,8 @@ class IslingtonSpider(Spider):
       delete += chr(i)
       i+=1
 
-    # while (True):
     if response.xpath("//div[@class='align_center']/a[preceding::span[@class='results_page_number_sel'] and \
-      not(@class='noborder')]/@href").extract():
+      not(@class='noborder')]").extract():
       app_urls = response.xpath("//td[@title='View Application Details']//a/@href").extract()
       app_urls = [str(url).translate(None, delete) for url in app_urls]
       for url in app_urls:

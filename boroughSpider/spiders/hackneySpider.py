@@ -82,16 +82,22 @@ class HackneySpider(Spider):
     chk = lambda key: key.replace(' ', '_').replace('_/_', '_').replace('?', '')
     table = { chk(key).lower(): (value[0] if value else '') for key, value in table.items() }
 
-    if response.xpath("//*[text()='Application Constraints']").extract() or \
-        response.xpath("//*[text()='Application Dates']").extract():
-      try:
-        const_url = self.base_url[0] + \
-          response.xpath("//*[text()='Application Constraints']/@href").extract()[0].encode('utf-8', 'ignore')
-        dates_url = self.base_url[0] + \
-          response.xpath("//*[text()='Application Dates']/@href").extract()[0].encode('utf-8', 'ignore')
-        return FormRequest(dates_url, method="GET", meta={'url': [const_url, dates_url], 'table':table}, callback = self.parse_dates)
-      except:
-        return FormRequest(const_url, method="GET", meta={'table':table}, callback=self.parse_constraints)
+    urls = []
+    if response.xpath("//*[text()='Application Constraints']").extract():
+      const_url = self.base_url[0] + \
+        response.xpath("//*[text()='Application Constraints']/@href").extract()[0].encode('utf-8')
+      urls.append(const_url)
+    if response.xpath("//*[text()='Application Dates']").extract():
+      dates_url = self.base_url[0] + \
+        response.xpath("//*[text()='Application Dates']/@href").extract()[0].encode('utf-8')
+      urls.append(dates_url)
+
+    if const_url in urls and not dates_url in urls:
+      return FormRequest(const_url, method="GET", meta={'table':table}, callback = self.parse_constraints)
+    elif dates_url in urls and not const_url in urls:
+      return FormRequest(const_url, method="GET", meta={'table':table}, callback=self.parse_dates)
+    elif const_url in urls and dates_url in urls:
+      return FormRequest(const_url, method="GET", meta={'url':dates_url, 'table':table}, callback=self.parse_constraints)
     else:
       hackneyItem = self.create_item_class('hackneyItem', table.keys())
       item = hackneyItem()
@@ -111,6 +117,15 @@ class HackneySpider(Spider):
         item['documents_url'] = 'n/a'
 
       return item
+  def parse_constraints(self, response):
+    # inspect_response(response, self)
+    #
+    try:
+      url = response.meta['url']
+    except KeyError, e:
+      print "ERROR! --> %s". e.args[0]
+
+    table0 = response.meta['table']
 
   def parse_dates(self, response):
     # inspect_response(response, self)

@@ -13,12 +13,17 @@ SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
 # DOWNLOAD_DELAY = 0.25
-
-COOKIES_ENABLED = True
+# COOKIES_ENABLED = True
 COOKIES_DEBUG = True
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
+USER_AGENT = "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36"
+
+# DOWNLOADER_MIDDLEWARES = {
+#     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+#     'boroughSpider.middlewares.ProxyMiddleware': 100,
+# }
 
 ITEM_PIPELINES = {
     'boroughSpider.pipelines.Westminster',
@@ -27,15 +32,9 @@ ITEM_PIPELINES = {
     'boroughSpider.pipelines.CityOfLondon',
     'boroughSpider.pipelines.Wandsworth',
     'boroughSpider.pipelines.Southwark',
-    'boroughSpider.pipelines.TowerHamlets'
+    'boroughSpider.pipelines.TowerHamlets',
+    'boroughSpider.pipelines.Islington'
 }
-
-USER_AGENT = "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36"
-
-# DOWNLOADER_MIDDLEWARES = {
-#     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
-#     'boroughSpider.middlewares.ProxyMiddleware': 100,
-# }
 
 ##############################################################################
 '''

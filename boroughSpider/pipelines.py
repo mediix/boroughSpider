@@ -637,6 +637,75 @@ class TowerHamlets(object):
             print "Error %d: %s" % (e.args[0], e.args[1])
             return item
 
+class Islington(object):
+    def __init__(self):
+        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.cursor = self.conn.cursor()
+        self.default = 'n/a'
+
+    @check_spider_pipeline
+    def process_item(self, item, spider):
+        try:
+            self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
+            address_response = self.cursor.fetchone()
+            if address_response is None:
+                self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('site_address', self.default)])
+                self.conn.commit()
+                self.cursor.execute("SELECT LAST_INSERT_ID();")
+                address_response = self.cursor.fetchone()
+            address_id = address_response[0]
+
+            self.cursor.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            applicants_name,
+            application_type,
+            proposed_development,
+            application_status,
+            decision,
+            decision_date,
+            appeal_received,
+            appeal_decision,
+            appeal_decision_date,
+            documents_url,
+            planning_portal_reference,
+            application_registration,
+            application_validation,
+            appeal_status,
+            expected_decision_level,
+            agent_name,
+            date_scraped) values (%s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, NOW());""",
+            (address_id,
+            item.get('borough', self.default),
+            item.get('domain', self.default),
+            item.get('application_number', self.default),
+            item.get('wards', self.default),
+            item.get('applicant', self.default),
+            item.get('application_type', self.default),
+            item.get('proposal', self.default),
+            item.get('status', self.default),
+            item.get('decision', self.default),
+            item.get('decision_date', self.default),
+            item.get('appeal_submitted', self.default),
+            item.get('appeal_decision', self.default),
+            item.get('appeal_submitted', self.default),
+            item.get('documents_url', self.default),
+            item.get('planning_portal_reference', self.default),
+            item.get('application_registered', self.default),
+            item.get('application_validated', self.default),
+            item.get('appeal_lodged', self.default),
+            item.get('expected_decision_level', self.default),
+            item.get('case_officer_tel', self.default)))
+            self.conn.commit()
+        except MySQLdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            return item
+
 
 # class Generic(object):
 #     def __init__(self):
