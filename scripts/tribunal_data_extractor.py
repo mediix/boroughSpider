@@ -65,7 +65,7 @@ def write_items(link):
 	wildcards = ','.join(['%s'] * len(cols))
 
 	"""
-	Doesn't exist: 290, 1092, 1111, 1082, 1550, 2292, 1463
+	Rows don't exist: 290, 1092, 1111, 1082, 1550, 2292, 1463
 	"""
 
 	for it in items:
