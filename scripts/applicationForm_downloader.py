@@ -40,27 +40,33 @@ def download_resource(data=None):
   ext = '.pdf'
   f = lambda x: x.replace('/', '_')
   if len(item) == 0:
-    print "LEN(item) == 0 -> NO file to download"
-  elif len(item) > 1: # item has more than one application form submitted
+    print "NO file to download"
+
+  elif len(item) > 1:
     print "LEN(item) > 1"
     for idx, it in enumerate(item):
+      # print it + '_' + str(idx+1)
       try:
-        response = requests.get(it.get('view'))
-        f = open(files_storage + f(key) + file_name + '_' + idx+1 + ext, 'wb')
+        response =  str(idx)
+        response = requests.get(it)
+        name = files_storage + f(key) + file_name + '_' + str(idx+1) + ext
+        print name
+        f = open(name, 'wb')
         f.write(response.content)
       except:
-        print "ERROR FROM download_resource"
+        print "ERROR FROM download_resource: elif"
       else:
         print "Download Completed"
         f.close()
+
   else:
     print "LEN(item) == 1"
     try:
-      response = requests.get(item[0].get('view'))
+      response = requests.get(item[0])
       f = open(files_storage + f(key) + file_name + ext, 'wb')
       f.write(response.content)
     except:
-      print "ERROR FROM download_source"
+      print "ERROR FROM download_source: else"
     else:
       print "Download Completed"
       f.close()
@@ -74,7 +80,7 @@ if __name__ == '__main__':
       for elem in value:
         for k, v in elem.items():
           if v == 'Application Form':
-            vals.append(elem)
+            vals.append(elem.get('view'))
 
     return (key, vals)
 
@@ -88,7 +94,7 @@ if __name__ == '__main__':
   result = { k.encode('utf-8'): None if not v[0] else v[0].encode('utf-8') for k, v in result.items() }
 
   intify = lambda x: 1 if len(x) > 0 else 0
-  for key, value in result.items()[:15]:
+  for key, value in result.items()[:10]:
     res = {}
     try:
       res[key] = doc_extract(value)
@@ -96,8 +102,7 @@ if __name__ == '__main__':
     except:
       print "ERROR FROM => main"
     # else:
-      # cur.execute("""UPDATE boroughs
-                     # SET has_application = %s
-                     # WHERE case_reference_borough = %s;""", [intify(value), key])
-      # con.commit()
-
+    #   cur.execute("""UPDATE boroughs
+    #                  SET has_application = %s
+    #                  WHERE case_reference_borough = %s;""", [intify(value), key])
+    #   con.commit()
