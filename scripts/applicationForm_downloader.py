@@ -1,11 +1,13 @@
 import MySQLdb, re
 import urllib2
+from urllib import urlencode
 import requests
 from bs4 import BeautifulSoup
 
 con = MySQLdb.connect(user='mehdi', passwd='pashmak.mN2', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
 
 files_storage = '/home/medi/UK_data/Medi/Application_documents/'
+files_storage = '/volumes/software development/research/data/Medi/Application_documents/'
 base_url = 'https://www.rbkc.gov.uk'
 
 def doc_extract(url=None):
@@ -45,19 +47,23 @@ def download_resource(data=None):
   elif len(item) > 1:
     print "LEN(item) > 1"
     for idx, it in enumerate(item):
-      # print it + '_' + str(idx+1)
+      print it + '_' + str(idx+1)
       try:
-        response =  str(idx)
-        response = requests.get(it)
         name = files_storage + f(key) + file_name + '_' + str(idx+1) + ext
-        print name
-        f = open(name, 'wb')
-        f.write(response.content)
-      except:
-        print "ERROR FROM download_resource: elif"
+
+        url = it
+        url_parts = url.split('?')
+        url_parts[1] = urlencode({'test':url_parts[1]})
+        url = '{0}?{1}'.format(url_parts[0], url_parts[1])
+
+        response = requests.get(url)
+        fp = open(name, 'wb')
+        fp.write(response.content)
+      except Exception, e:
+        print "ERROR FROM download_resource: elif: ", e
       else:
         print "Download Completed"
-        f.close()
+        fp.close()
 
   else:
     print "LEN(item) == 1"
