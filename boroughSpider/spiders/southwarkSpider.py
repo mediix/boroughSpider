@@ -14,7 +14,7 @@ import time
 class SouthwarkSpider(Spider):
   name = 'soutSpider'
   domain = 'southwark.gov.uk'
-  pipeline = 'Southwark'
+  # pipeline = 'Southwark'
   base_url = ["http://planbuild.southwark.gov.uk:8190/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
               "http://planbuild.southwark.gov.uk:8190"]
   start_urls = ["http://planbuild.southwark.gov.uk:8190/online-applications/search.do?action=monthlyList"]
@@ -123,6 +123,7 @@ class SouthwarkSpider(Spider):
 
   def parse_important_dates(self, response):
     #inspect_response(response)
+    # dparser = lambda x: x if x is None or x == '' or x.isdigit() else parser.parse(x.encode('utf-8')).strftime("%Y-%m-%d")
 
     table = response.meta['table']
 
@@ -131,7 +132,7 @@ class SouthwarkSpider(Spider):
     tab = extract(response.body, strategy=strat)
     table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
 
-    table = {key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items()}
+    table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
 
     southwarkItem = self.create_item_class('southwarkItem', table.keys())
     item = southwarkItem()
@@ -146,6 +147,13 @@ class SouthwarkSpider(Spider):
           item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
       except:
         item[key] = value
+
+    import pickle
+
+    with open('/home/medi/Desktop/mapping.pkl', 'wb') as output:
+      pickle.dump(item.keys(), output)
+
+
     item['borough'] = "Southwark"
     item['domain'] = self.domain
     try:

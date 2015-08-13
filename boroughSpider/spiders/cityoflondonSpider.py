@@ -10,11 +10,8 @@ from dateutil import parser
 
 class cityOfLondonSpider(Spider):
   name = 'londSpider'
-
-  pipeline = 'CityOfLondon'
-
+  # pipeline = 'CityOfLondon'
   domain = 'cityoflondon.gov.uk'
-
   base_url = ["http://www.planning2.cityoflondon.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
               "http://www.planning2.cityoflondon.gov.uk"]
 

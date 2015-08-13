@@ -273,7 +273,6 @@ class Westminster(object):
 
 
 class CityOfLondon(object):
-
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
@@ -706,30 +705,40 @@ class Islington(object):
             print "Error %d: %s" % (e.args[0], e.args[1])
             return item
 
+dbCol_mapping = { 'Southwark': {},
+                  'Wandsworth': {},
+                  'CityOfLondon': {},
+                  'Hackney': {},
+                  'Kensington': {},
+                  'Westminster': {},
+                  'TowerHamlets': {},
+                  'Islington': {},
+                }
 
-# class Generic(object):
+
+# class GenericPipeline(object):
 #     def __init__(self):
-#         self.con = MySQLdb.connect(user='mehdi', passwd='pashmak.mN2', db='research_uk_public_data', host='granweb01', charset="utf8", use_unicode=True)
+#         self.con = MySQLdb.connect(user='user', passwd='pass', db='research_uk_public_data', host='granweb01', charset="utf8", use_unicode=True)
 #         self.cur = self.con.cursor()
 #         self.default = 'n/a'
 
 #     def table_exists(self, name):
-#         '''
+#         """
 #         colnames: column names for table to create
 #         name: table's name
 #         return: True if table schema exists, False otherwise
-#         '''
+#         """
 #         import pandas.io.sql as psql
 #         df = psql.read_sql("SHOW TABLES LIKE 'MYTABLE'".replace('MYTABLE', name), self.con)
 #         exists = False if df.empty else True
 #         return exists
 
 #     def create_table(self, item, name):
-#         '''
+#         """
 #         item: to create column names with item.keys
 #         name: name of the table
 #         return: create table in order for item insertion
-#         '''
+#         """
 #         db_colname = lambda col: col.replace('_/_', '_').replace('?', '').strip()
 #         column_types = []
 #         for it in item.keys():
