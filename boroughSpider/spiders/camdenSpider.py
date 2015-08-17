@@ -33,7 +33,7 @@ class CamdenSpider(Spider):
                                       callback = self.parse_search_result)]
 
   def parse_search_result(self, response):
-    inspect_response(response, self)
+    # inspect_response(response, self)
 
     delete = ""
     i = 1

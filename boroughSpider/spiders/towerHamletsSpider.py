@@ -45,8 +45,8 @@ class towerHamletsSpider(Spider):
                 formname='Template',
                 formdata={'cboSelectDateValue':'DATE_RECEIVED',
                           'rbGroup':'rbMonth',
-                          'cboMonths':'1'},
-                callback=self.parse_search_result)
+                          'cboMonths':'12'},
+                callback=self.parse_results)
 
   def parse_results(self, response):
     # inspect_response(response, self)

@@ -11,9 +11,7 @@ from datetime import date, datetime, timedelta
 
 class kensingtonSpider(Spider):
     name = 'kensSpider'
-
     domain = 'http://rbkc.gov.uk'
-
     pipeline = 'Kensington'
 
     def create_dates(self, start, end, delta):
