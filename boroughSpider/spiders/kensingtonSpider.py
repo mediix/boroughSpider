@@ -19,8 +19,8 @@ class kensigtonSpider(Spider):
   def create_dates(self, start, end, delta):
     curr = start
     while curr < end:
-        yield curr
-        curr += delta
+      yield curr
+      curr += delta
 
   def start_requests(self):
     return [FormRequest(self.base_url[0], method="GET", callback = self.parse_date_result)]
