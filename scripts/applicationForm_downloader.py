@@ -4,17 +4,19 @@ from urllib import urlencode
 import requests
 from bs4 import BeautifulSoup
 
-con = MySQLdb.connect(user='user', passwd='pass', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+con = MySQLdb.connect(user='mehdi', passwd='pashmak.mN2', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
 
-files_storage = '/home/medi/UK_data/Medi/Application_documents/'
-base_url = 'https://www.rbkc.gov.uk'
+files_storage = '/home/medi/UK_data/Medi/Application_documents_1/'
+base_url = 'http://idoxpa.westminster.gov.uk'
 
 def doc_extract(url=None):
   """"""
+  print "URL: ", url
   ln = requests.get(url)
   ln.encoding = 'utf-8'
   soup = BeautifulSoup(ln.text)
-  table = soup.find('table', {'id': 'casefiledocs'})
+  # table = soup.find('table', {'id': 'casefiledocs'})  # kensigton
+  table = soup.find('table', {'id': 'Documents'})       # City of Westminster
   #
   keys = []
   for th in table.findAll('th'):
@@ -27,7 +29,7 @@ def doc_extract(url=None):
       if td.find('a'):
         vals.append(base_url + td.find('a').get('href'))
       else:
-        vals.append(td.get_text(strip=True).encode('ascii', 'ignore'))
+        vals.append(td.get_text(strip=True))
     #
     data.append(dict(zip(keys, vals)))
 
@@ -51,7 +53,8 @@ def download_resource(data=None):
         url_parts = url.split('?')
         url_parts[1] = urlencode({'test':url_parts[1]})
         url = '{0}?{1}'.format(url_parts[0], url_parts[1])
-        response = requests.get(url)
+        print it
+        response = requests.get(it)
         f = open(name, 'wb')
         f.write(response.content)
       except Exception, e:
@@ -61,6 +64,7 @@ def download_resource(data=None):
         f.close()
   else:
     try:
+      print item
       response = requests.get(item[0])
       f = open(files_storage + fk(key) + file_name + ext, 'wb')
       f.write(response.content)
@@ -70,6 +74,7 @@ def download_resource(data=None):
       print "%s Download Completed" % (fk(key)+file_name+ext)
       f.close()
 
+#----------------------------------------------------------------------------------
 if __name__ == '__main__':
   ###
   def select(data=None):
@@ -86,22 +91,34 @@ if __name__ == '__main__':
   cur = con.cursor()
   cur.execute("""SELECT case_reference_borough, documents_url
                  FROM boroughs
-                 WHERE borough = 'Royal Borough of Kensington and Chelsea'
-                    AND has_application = 0;""")
+                 WHERE borough = 'City of Westminster'
+                    AND has_application = 0
+                    AND borough != ''
+                    AND documents_url != 'n/a';""")
   result = cur.fetchall()
   result = { t[0]: t[1:] for t in result }
-  result = { k.encode('utf-8'): None if not v[0] else v[0].encode('utf-8') for k, v in result.items() }
+  result = { k: None if not v[0] else v[0].encode('utf-8') for k, v in result.items() }
+
+  # for k, v in result.items():
+    # if k is None:
+      # result['n/a'] = v.encode('utf-8')
+    # else:
+      # result[k.encode('utf-8')] = v.encode('utf-8')
 
   intify = lambda x: 1 if len(x) > 0 else 0
   for key, value in result.items():
     res = {}
     try:
-      res[key] = doc_extract(value)
+      res[key.encode('utf-8')] = doc_extract(value)
       download_resource(select(res))
     except:
       print "ERROR FROM => main"
     else:
       cur.execute("""UPDATE boroughs
                      SET has_application = %s
-                     WHERE case_reference_borough = %s;""", [intify(value), key])
+                     WHERE case_reference_borough = %s;""", [intify(value), key.encode('utf-8')])
       con.commit()
+
+# /online-applications/files/D3634D3CD5C4ACDE197B37BC74CFB526/pdf/14_12216_LBC-SEE_ALSO_14_12215_FULL-3651899.pdf
+
+# http://idoxpa.westminster.gov.uk/online-applications/files/D3634D3CD5C4ACDE197B37BC74CFB526/pdf/14_12216_LBC-SEE_ALSO_14_12215_FULL-3651899.pdf

@@ -1,7 +1,6 @@
 from scrapy.spider import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
-from scrapy.item import DictItem, Field
 
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
@@ -10,33 +9,16 @@ from dateutil import parser
 
 class cityOfLondonSpider(Spider):
   name = 'londSpider'
-  # pipeline = 'CityOfLondon'
-  pipeline = 'GenericPipeline'
+  pipeline = ['CityOfLondon', 'GenericPipeline']
   domain = 'cityoflondon.gov.uk'
-  base_url = ["http://www.planning2.cityoflondon.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=", "http://www.planning2.cityoflondon.gov.uk"]
+  base_url = ["dummy", "http://www.planning2.cityoflondon.gov.uk"]
   start_urls = ["http://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=monthlyList"]
 
   def __init__(self, month=None):
     self.month = month
-    self.start_urls = ["http://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=monthlyList"]
-
-  def create_item_class(self, class_name, field_list):
-    fields = {}
-    for field_name in field_list:
-      fields[field_name] = Field()
-
-    fields.update({'domain': Field()})
-    fields.update({'borough': Field()})
-    fields.update({'documents_url': Field()})
-    return type(class_name, (DictItem,), {'fields':fields})
 
   def parse(self, response):
-    print "MONTH:", self.month
-    # inspect_response(response)
-    # url = response.xpath("//*[@name='searchCriteriaForm']/@action").extract()[0]
-    # post_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
-    # for month in response.xpath("//*[@id='month']/option/text()").extract():
-    # for month in months:
+    print "Post Request Month:", self.month
     return [FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
                         formdata = { 'searchCriteria.caseStatus':'',
@@ -48,8 +30,6 @@ class cityOfLondonSpider(Spider):
 
   def parse_results(self, response):
     # inspect_response(response)
-    # url = response.xpath("//*[@name='searchCriteriaForm']/@action").extract()[0]
-    # post_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
     return [FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
                           formdata = { 'searchCriteria.page':'1',
@@ -58,28 +38,6 @@ class cityOfLondonSpider(Spider):
                                         'orderByDirection':'Descending',
                                         'searchCriteria.resultsPerPage':'100' },
                           callback = self.parse_long_results)]
-
-  # def parse_results(self, response):
-  #   # inspect_response(response, self)
-  #   try:
-  #     pages = response.xpath("//p[@class='pager bottom']/span[@class='showing'] \
-  #               /text()[(preceding-sibling::strong)]").extract()[0].encode('utf-8')
-  #     pages = int(pages.split()[1])
-  #     pages = (pages/10) + (pages % 10 > 0)
-  #     #
-  #     for page_num in xrange(1, pages+1):
-  #       url = '{0}{1}'.format(self.base_url[0], page_num)
-  #       yield FormRequest(url, method="GET", callback = self.parse_items)
-  #   except Exception as err:
-  #     print "Error -> parse_results", err
-  #     pass
-
-  #   try:
-  #     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-  #       item_url = '{0}{1}'.format(self.base_url[1], url)
-  #       yield FormRequest(item_url, method="GET", callback = self.parse_summary)
-  #   except Exception as err:
-  #     pass
 
   def parse_long_results(self, response):
     # inspect_response(response, self)
@@ -92,7 +50,7 @@ class cityOfLondonSpider(Spider):
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
       # parse the next page of items
       for url in response.xpath("//p[@class='pager top']/a[@class='page']/@href").extract():
-        nxt_url = '{0}{1}'.format(self.base_url[0], url.encode('utf-8'))
+        nxt_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
         yield FormRequest(nxt_url, method="GET", callback = self.parse_items)
     # if there is not pagination
     else:
@@ -141,30 +99,30 @@ class cityOfLondonSpider(Spider):
       return FormRequest(important_dates, method="GET", meta={'table':table}, callback=self.parse_important_dates)
 
     else:
-      table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
-      cityoflondonItem = self.create_item_class('cityoflondonItem', table.keys())
-      item = cityoflondonItem()
+      table = { k.replace(' ', '_').lower(): v[0].encode('utf-8') for k, v in table.items() }
 
       for key, value in table.items():
         try:
           if value == '':
-            item[key] = 'n/a'
+            table[key] = ''
           elif value.isdigit():
-            item[key] = value
+            table[key] = value
           else:
-            item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+            table[key] = parser.parse(value.encode('utf-8')).strftime("%Y-%m-%d")
         except Exception as err:
-          item[key] = value
+          table[key] = value
 
-      item['borough'] = "City of London"
-      item['domain'] = self.domain
+      table.update({'borough': "City of London"})
+      table.update({'domain': self.domain})
+
       try:
         documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
         documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
-        item['documents_url'] = documents_url
+        table.update({'documents_url': documents_url})
       except Exception as err:
-        item['documents_url'] = "n/a"
+        table.update({'documents_url': 'n/a'})
 
+      item = table
       return item
 
   def parse_important_dates(self, response):
@@ -180,28 +138,111 @@ class cityOfLondonSpider(Spider):
     else:
       table.update(table_1)
 
-    table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
-    cityoflondonItem = self.create_item_class('cityoflondonItem', table.keys())
-    item = cityoflondonItem()
+    table = { k.replace(' ', '_').lower(): v[0].encode('utf-8') for k, v in table.items() }
 
     for key, value in table.items():
       try:
         if value == '':
-          item[key] = 'n/a'
+          table[key] = ''
         elif value.isdigit():
-          item[key] = value
+          table[key] = value
         else:
-          item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+          table[key] = parser.parse(value.encode('utf-8')).strftime("%Y-%m-%d")
       except Exception as err:
-        item[key] = value
+        table[key] = value
 
-    item['borough'] = "City of London"
-    item['domain'] = self.domain
+    table.update({'borough': "City of London"})
+    table.update({'domain': self.domain})
+
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
-      item['documents_url'] = documents_url
     except Exception as err:
-      item['documents_url'] = "n/a"
+      table.update({'documents_url': 'n/a'})
+    else:
+      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+      table.update({'documents_url': documents_url})
 
+    if documents_url:
+      self.downloader(documents_url, response.headers['Set-Cookie'])
+
+    item = table
     return item
+
+  def downloader(self, url=None, cookie=None):
+    """"""
+    def select(data=None):
+      """"""
+      vals = []
+      for key, value in data.items():
+        for elem in value:
+          for k, v in elem.items():
+            if v == 'Application Form':
+              vals.append(elem.get('view'))
+      return (key, vals)
+
+    try:
+      import requests
+      from bs4 import BeautifulSoup
+      from boroughSpider.settings import files_storage
+    except ImportError as err:
+      print err
+
+    print "FILE STORAGE: ", files_storage
+    resp = requests.get(url, cookies=cookie)
+    resp.encoding = 'utf-8'
+    soup = BeautifulSoup(resp.text)
+    docs_table = soup.find('table', {'id': 'Documents'})  # City of Westminster
+    #
+    keys = []
+    for th in docs_table.findAll('th'):
+      keys.append(str(th.get_text(strip=True)).lower().replace(' ', '_'))
+
+    data = []
+    for tr in docs_table.findAll('tr')[1:]: # skip the table header
+      vals = []
+      for td in tr.findAll('td'):
+        if td.find('a'):
+          vals.append(self.base_url[1] + td.find('a').get('href'))
+        else:
+          vals.append(td.get_text(strip=True))
+      #
+      data.append(dict(zip(keys, vals)))
+
+    data = select(data)
+    key = data[0]
+    item = data[1]
+    file_name = '_application_form'
+    ext = '.pdf'
+    fk = lambda x: x.replace('/', '_')
+
+    if len(item) == 0:
+      print "NO file to download"
+    elif len(item) > 1:
+      for idx, it in enumerate(item):
+        try:
+          name = files_storage + fk(key) + file_name + '_' + str(idx+1) + ext
+          # url = it
+          # url_parts = url.split('?')
+          # url_parts[1] = urlencode({'test':url_parts[1]})
+          # url = '{0}?{1}'.format(url_parts[0], url_parts[1])
+          response = requests.get(it, cookies=cookie)
+          f = open(name, 'wb')
+          f.write(response.content)
+        except Exception, e:
+          print "ERROR FROM download_resource: elif: ", e
+        else:
+          print "%s Download Completed" % (fk(key)+file_name+'_'+str(idx+1)+ext)
+          f.close()
+    else:
+      try:
+        print item
+        response = requests.get(item[0])
+        f = open(files_storage + fk(key) + file_name + ext, 'wb')
+        f.write(response.content)
+      except Exception as e:
+        print "ERROR FROM download_source: else", e
+      else:
+        print "%s Download Completed" % (fk(key)+file_name+ext)
+        f.close()
+
+

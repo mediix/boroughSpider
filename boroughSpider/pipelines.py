@@ -4,20 +4,21 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
-from scrapy import log
 import MySQLdb
 import functools
 import sys
 import re
 import pickle
 import os
+from scrapy import log
+
+file_path = "/home/medi/workbench/boroughSpider/mappings/NAME_item_keys.pkl"
 
 def check_spider_pipeline(process_item_method):
-
     @functools.wraps(process_item_method)
     def wrapper(self, item, spider):
         msg = '%%s %s pipeline' % (self.__class__.__name__)
-        if self.__class__.__name__ == spider.pipeline:
+        if self.__class__.__name__ in spider.pipeline:
             spider.log(msg % 'executing', level=log.DEBUG)
             return process_item_method(self, item, spider)
         else:
@@ -25,47 +26,51 @@ def check_spider_pipeline(process_item_method):
             return item
     return wrapper
 
+def store_keys(item, name):
+    """"""
+    file_name = file_path.replace('NAME', name)
+    item_keys = item.keys()
+
+    if not os.path.isfile(file_name):
+        with open(file_name, 'wb') as f:
+            pickle.dump(item_keys, f)
+    try:
+        with open(file_name, 'rb') as f:
+            stored_keys = pickle.load(f)
+    except Exception as err:
+        print "Error opening file: ", err
+        pass
+    if stored_keys:
+        diff = list(set(item_keys) - set(stored_keys))
+        if diff:
+            print "\n!!!!!!!!DIFF IS: \n", diff
+            stored_keys = stored_keys + diff
+            with open(file_name, 'wb') as f:
+                pickle.dump(stored_keys, f)
+    else:
+        stored_keys = item_keys
+        with open(file_name, 'wb') as f:
+            pickle.dump(stored_keys, f)
+
 class Kensington(object):
     def __init__(self):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
         self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
-
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        sp_name = self.__class__.__name__
+        store_keys(item, sp_name)
+        with open(file_path.replace('NAME', sp_name), 'rb') as f:
+            db_keymap = pickle.load(f)
+
+        data = {}
+        for key, value in db_keymap.items():
+            data[key] = item.get(key)
+
+        data = [tuple(item.get(db_keymap.get(key)) for key in db_keymap.keys())]
+
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -155,40 +160,9 @@ class Hammersmith(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -273,43 +247,9 @@ class Westminster(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        # print "FILE_NAME: {0}".format(file_name)
-        # print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -383,43 +323,10 @@ class CityOfLondon(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        print "FILE_NAME: {0}".format(file_name)
-        print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        print "From Pipeline -> Item: ", item
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -504,43 +411,9 @@ class Wandsworth(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        # print "FILE_NAME: {0}".format(file_name)
-        # print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -607,43 +480,9 @@ class Hackney(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        # print "FILE_NAME: {0}".format(file_name)
-        # print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -711,43 +550,9 @@ class Southwark(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        # print "FILE_NAME: {0}".format(file_name)
-        # print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -830,43 +635,9 @@ class TowerHamlets(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        # print "FILE_NAME: {0}".format(file_name)
-        # print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('location', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -927,43 +698,9 @@ class Islington(object):
         self.default = 'n/a'
         self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
-    def store_keys(self, item):
-        """"""
-        file_name = self.path.replace('NAME', self.__class__.__name__)
-        item_keys = item.keys()
-
-        # print "FILE_NAME: {0}".format(file_name)
-        # print "KEYS: {}".format(item_keys)
-
-        if not os.path.isfile(file_name):
-            with open(file_name, 'wb') as f:
-                pickle.dump(item_keys, f)
-            f.close()
-
-        try:
-            with open(file_name, 'rb') as f:
-                stored_keys = pickle.load(f)
-        except Exception as err:
-            print "Error opening file: ", err
-            pass
-
-        if stored_keys:
-            diff = list(set(item_keys) - set(stored_keys))
-            if diff:
-                print "\n!!!!DIFF IS: {0}\n".format(diff)
-                stored_keys = stored_keys + diff
-                with open(file_name, 'wb') as f:
-                    pickle.dump(stored_keys, f)
-                f.close()
-        else:
-            stored_keys = item_keys
-            with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
-            f.close()
-
     @check_spider_pipeline
     def process_item(self, item, spider):
-        self.store_keys(item)
+        store_keys(item, self.__class__.__name__)
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -1026,87 +763,81 @@ class Islington(object):
         #     return item
 
 class GenericPipeline(object):
-  def __init__(self):
-    self.con = MySQLdb.connect(user='mehdi', passwd='pashmak.mN2', db='research_uk_public_data', host='granweb01', charset='utf8', use_unicode=True)
-    self.cur = self.con.cursor()
-    self.db_columns = []
+    def __init__(self):
+      self.con = MySQLdb.connect(user='mehdi', passwd='pashmak.mN2', db='research_uk_public_data', host='granweb01', charset='utf8', use_unicode=True)
+      self.cur = self.con.cursor()
+      self.db_columns = []
 
-  def table_exists(self, table_name):
-    """"""
-    query = "SHOW TABLES LIKE 'MYTABLE'".replace('MYTABLE', table_name)
-    self.cur.execute(query)
-    tables = self.cur.fetchone()
-    exists = True if tables else False
-    return exists
+    def table_exists(self, table_name):
+      """"""
+      query = "SHOW TABLES LIKE 'MYTABLE'".replace('MYTABLE', table_name)
+      self.cur.execute(query)
+      tables = self.cur.fetchone()
+      exists = True if tables else False
+      return exists
 
-  def create_table(self, item, name):
-    """"""
-    column_types = []
-    for it in item.keys():
-      column_types.append((it, 'TEXT'))
+    def create_table(self, item, name):
+      """"""
+      column_types = []
+      for it in item.keys():
+        column_types.append((it, 'TEXT'))
+      columns = ',\n'.join('`%s` %s' % x for x in column_types)
+      create = """CREATE TABLE %(table_name)s (id INT(10) PRIMARY KEY AUTO_INCREMENT NOT NULL, %(columns)s, birth DATETIME NOT NULL, time_stamp TIMESTAMP);"""
+      schema = create % {'table_name':name, 'columns':columns}
+      try:
+        self.cur.execute(schema)
+        self.con.commit()
+      except MySQLdb.Error as err:
+        print "Error %d: %s" % (err.args[0], err.args[1])
 
-    columns = ',\n'.join('`%s` %s' % x for x in column_types)
-    create = """CREATE TABLE %(table_name)s (id INT PRIMARY KEY AUTO_INCREMENT NOT NULL, %(columns)s, birth DATETIME NOT NULL, time_stamp TIMESTAMP);"""
-    schema = create % {'table_name':name, 'columns':columns}
-    try:
-      self.cur.execute(schema)
+      return item.keys()
+
+    def check_db(self, diff_list, name):
+      """"""
+      import os
+      path = os.getcwd()
+      with open(path+'/%s.txt' % (name), 'w') as f:
+        f.write('\n'.join(diff_list))
+
+      column_types = []
+      for it in diff_list:
+        column_types.append(('ADD COLUMN `%s`' % it, 'TEXT'))
+      columns = ',\n'.join('%s %s' % x for x in column_types)
+      alter_sql = "ALTER TABLE %(table)s %(columns)s AFTER %(column)s;" % {'table':name, 'columns':columns, 'column':self.db_columns[-1]}
+      try:
+        self.cur.execute(alter_sql)
+        self.con.commit()
+      except MySQLdb.Error as err:
+        print "Error %d: %s" % (err.args[0], err.args[1])
+
+      return self.db_columns + diff_list
+
+    def insert(self, item, name):
+      """"""
+      sql = "SHOW COLUMNS FROM TABLE;".replace('TABLE', name)
+      self.cur.execute(sql)
+      cols = self.cur.fetchall()
+      cols = [col[0].encode('utf-8') for col in cols[1:-2]]
+      col_names = ','.join('`%s`' % col for col in cols)
+      wildcards = ','.join(['%s'] * len(cols))
+      insert_sql = "INSERT INTO %s (%s, birth) VALUES (%s,NOW());" % (name, col_names, wildcards)
+      data = tuple([item.get(col, 'n/a') for col in cols])
+      self.cur.execute(insert_sql, data)
       self.con.commit()
-    except MySQLdb.Error as err:
-      print "Error %d: %s" % (err.args[0], err.args[1])
 
-    return item.keys()
-
-  def check_db(self, diff_list, name):
-    """"""
-    import os
-    path = os.getcwd()
-    with open(path+'/%s.txt' % (name), 'w') as f:
-      f.write('\n'.join(diff_list))
-    f.close()
-
-    column_types = []
-    for it in diff_list:
-      column_types.append(('ADD COLUMN `%s`' % it, 'TEXT'))
-
-    columns = ',\n'.join('%s %s' % x for x in column_types)
-    alter_sql = "ALTER TABLE %(table)s %(columns)s AFTER %(column)s;" % {'table':name, 'columns':columns, 'column':self.db_columns[-1]}
-    try:
-      self.cur.execute(alter_sql)
-      self.con.commit()
-    except MySQLdb.Error as err:
-      print "Error %d: %s" % (err.args[0], err.args[1])
-
-    return self.db_columns + diff_list
-
-  def insert(self, item, name):
-    """"""
-    sql = "SHOW COLUMNS FROM TABLE;".replace('TABLE', name)
-    self.cur.execute(sql)
-    cols = self.cur.fetchall()
-    cols = [col[0].encode('utf-8') for col in cols[1:-2]]
-    col_names = ','.join('`%s`' % col for col in cols)
-    wildcards = ','.join(['%s'] * len(cols))
-    insert_sql = "INSERT INTO %s (%s, birth) VALUES (%s,NOW());" % (name, col_names, wildcards)
-
-    data = tuple([item.get(col, 'n/a') for col in cols])
-    self.cur.execute(insert_sql, data)
-    self.con.commit()
-
-  @check_spider_pipeline
-  def process_item(self, item, spider):
-    """"""
-    spider_class = spider.__class__.__name__
-    self.db_columns = item.keys()
-
-    if self.table_exists(spider_class) is False:
-      self.db_columns = self.create_table(item, spider_class)
-
-    item_keys = item.keys()
-    diff = list(set(item_keys) - set(self.db_columns))
-    if diff:
-      self.db_columns = self.check_db(diff, spider_class)
-
-    try:
-      self.insert(item, spider_class)
-    except Exception as err:
-      print "ERROR Froom process_item: ", err
+    @check_spider_pipeline
+    def process_item(self, item, spider):
+      """"""
+      # print "Item: ", item
+      spider_class = spider.__class__.__name__
+      # self.db_columns = item.keys()
+      if self.table_exists(spider_class) is False:
+        self.db_columns = self.create_table(item, spider_class)
+      item_keys = item.keys()
+      diff = list(set(item_keys) - set(self.db_columns))
+      if diff:
+        self.db_columns = self.check_db(diff, spider_class)
+      try:
+        self.insert(item, spider_class)
+      except Exception as err:
+        print "ERROR Froom process_item: ", err

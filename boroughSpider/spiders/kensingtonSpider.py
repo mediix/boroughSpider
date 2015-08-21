@@ -12,23 +12,13 @@ from datetime import date, datetime, timedelta
 class kensingtonSpider(Spider):
     name = 'kensSpider'
     domain = 'http://rbkc.gov.uk'
-    pipeline = 'Kensington'
+    pipeline = ['Kensington', 'GenericPipeline']
 
     def create_dates(self, start, end, delta):
         curr = start
         while curr < end:
             yield curr
             curr += delta
-
-    def create_item_class(self, class_name, field_list):
-        fields = {}
-        for field_name in field_list:
-            fields[field_name] = Field()
-
-        fields.update({'domain': Field()})
-        fields.update({'borough': Field()})
-        fields.update({'documents_url': Field()})
-        return type(class_name, (DictItem,), {'fields':fields})
 
     def __init__(self):
         self.allowed_domains = ["rbkc.gov.uk"]
@@ -44,8 +34,8 @@ class kensingtonSpider(Spider):
         #inspect_response(response)
         weeks = []
         # for date in response.xpath("//select[@id='WeekEndDate']/option/@value").extract():
-        for result in self.create_dates(date(2014, 6, 6), date(2014, 11, 21), timedelta(days=7)):
-            weeks.append(result.strftime("%d-%m-%Y"))
+        for res in self.create_dates(date(2010, 1, 1), date(date.today().year, (date.today().month+1)%12, 1), timedelta(days=7)):
+            weeks.append(res.strftime("%d/%m/%Y"))
 
         for week in weeks[::-1]:
             yield FormRequest(self.base_url[1], method="POST",
@@ -61,37 +51,36 @@ class kensingtonSpider(Spider):
 
     def parse_item_result(self, response):
         #inspect_response(response)
-
         strat = (parse_html,)
 
         tab = extract(response.body, strategy=strat)
         table = list(prototypes.convert_table(tab.xpath("//table")))[:6]
         result = {}
         for d in table: result.update(d)
-        result = { key.replace(' ', '_').replace(':', '').lower(): value[0] for key, value in result.items() }
+        result = { k.replace(' ', '_').replace(':', '').lower(): v[0] for k, v in result.items() }
 
-        kensingtonItem = self.create_item_class('kensingtonItem', result.keys())
-
-        item = kensingtonItem()
 
         for key, value in result.items():
           try:
             if value == '':
-                item[key] = 'n/a'
+                result[key] = ''
             elif value.isdigit():
-                item[key] = value
+                result[key] = value
             else:
-                item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
+                result[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
           except:
-            item[key] = value
+            result[key] = value
+
+        result.update({'borough': "Royal Borough of Kensington and Chelsea"})
+        result.update({'domain': self.domain})
 
         try:
             url = response.xpath("//a[@href='#tabs-planning-6']/@href").extract()
-            item["documents_url"] = response.url + url[0]
-        except:
-            item["documents_url"] = 'n/a'
+        except Exception as err:
+            result.update({'documents_url': 'n/a'})
+        else:
+            result.update({'documents_url':response.url + url[0]})
 
-        item["borough"] = "Royal Borough of Kensington and Chelsea"
-        item["domain"] = self.domain
 
+        item = result
         return item

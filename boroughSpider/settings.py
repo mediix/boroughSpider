@@ -16,7 +16,7 @@ BOT_NAME = 'boroughSpider'
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
 
-DOWNLOAD_DELAY = 1
+DOWNLOAD_DELAY = 1.25
 COOKIES_ENABLED = False
 # CONCURRENT_REQUESTS=1
 # CONCURRNT_REQUESTS_PER_IP=1
@@ -30,17 +30,18 @@ COOKIES_ENABLED = False
 # }
 
 ITEM_PIPELINES = {
-    # 'boroughSpider.pipelines.Westminster',
-    # 'boroughSpider.pipelines.Hammersmith',
-    # 'boroughSpider.pipelines.Kensington',
-    # 'boroughSpider.pipelines.CityOfLondon',
-    # 'boroughSpider.pipelines.Wandsworth',
-    # 'boroughSpider.pipelines.Southwark',
-    # 'boroughSpider.pipelines.TowerHamlets',
-    # 'boroughSpider.pipelines.Islington',
+    'boroughSpider.pipelines.Westminster',
+    'boroughSpider.pipelines.Hammersmith',
+    'boroughSpider.pipelines.Kensington',
+    'boroughSpider.pipelines.CityOfLondon',
+    'boroughSpider.pipelines.Wandsworth',
+    'boroughSpider.pipelines.Southwark',
+    'boroughSpider.pipelines.TowerHamlets',
+    'boroughSpider.pipelines.Islington',
     'boroughSpider.pipelines.GenericPipeline'
 }
 
+files_storage = '/home/medi/UK_data/Medi/Application_documents_1/'
 ##############################################################################
 '''
 EXPORT_FIELDS = [
