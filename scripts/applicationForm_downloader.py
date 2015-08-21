@@ -12,11 +12,14 @@ base_url = 'http://idoxpa.westminster.gov.uk'
 def doc_extract(url=None):
   """"""
   print "URL: ", url
-  ln = requests.get(url)
-  ln.encoding = 'utf-8'
-  soup = BeautifulSoup(ln.text)
-  # table = soup.find('table', {'id': 'casefiledocs'})  # kensigton
-  table = soup.find('table', {'id': 'Documents'})       # City of Westminster
+  with requests.Session() as s:
+    r = s.get(url)
+    c = s.cookie.get_dict()
+  # ln = requests.get(url)
+  r.encoding = 'utf-8'
+  soup = BeautifulSoup(r.text)
+  table = soup.find('table', {'id': 'casefiledocs'})  # kensigton
+  # table = soup.find('table', {'id': 'Documents'})       # City of Westminster
   #
   keys = []
   for th in table.findAll('th'):
@@ -118,7 +121,3 @@ if __name__ == '__main__':
                      SET has_application = %s
                      WHERE case_reference_borough = %s;""", [intify(value), key.encode('utf-8')])
       con.commit()
-
-# /online-applications/files/D3634D3CD5C4ACDE197B37BC74CFB526/pdf/14_12216_LBC-SEE_ALSO_14_12215_FULL-3651899.pdf
-
-# http://idoxpa.westminster.gov.uk/online-applications/files/D3634D3CD5C4ACDE197B37BC74CFB526/pdf/14_12216_LBC-SEE_ALSO_14_12215_FULL-3651899.pdf
