@@ -7,8 +7,6 @@
 
 from scrapy.item import Item, Field
 
-
 class GeneralItem(Item):
     # define the fields for your item here like:
     pass
-

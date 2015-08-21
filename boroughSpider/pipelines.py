@@ -8,7 +8,7 @@ import MySQLdb
 import functools
 import sys
 import re
-import pickle
+import pickle, json
 import os
 from scrapy import log
 
@@ -33,10 +33,10 @@ def store_keys(item, name):
 
     if not os.path.isfile(file_name):
         with open(file_name, 'wb') as f:
-            pickle.dump(item_keys, f)
+            json.dump(item_keys, f)
     try:
         with open(file_name, 'rb') as f:
-            stored_keys = pickle.load(f)
+            stored_keys = json.load(f)
     except Exception as err:
         print "Error opening file: ", err
         pass
@@ -46,41 +46,46 @@ def store_keys(item, name):
             print "\n!!!!!!!!DIFF IS: \n", diff
             stored_keys = stored_keys + diff
             with open(file_name, 'wb') as f:
-                pickle.dump(stored_keys, f)
+                json.dump(stored_keys, f)
     else:
         stored_keys = item_keys
         with open(file_name, 'wb') as f:
-            pickle.dump(stored_keys, f)
+            json.dump(stored_keys, f)
 
 class Kensington(object):
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
+        self.con = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
+        self.cur = self.con.cursor()
+        self.default = ''
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         sp_name = self.__class__.__name__
-        store_keys(item, sp_name)
+        # store_keys(item, sp_name)
         with open(file_path.replace('NAME', sp_name), 'rb') as f:
             db_keymap = pickle.load(f)
 
-        data = {}
-        for key, value in db_keymap.items():
-            data[key] = item.get(key)
+        try:
+            self.cur.execute("SELECT a.id FROM addresses a WHERE a.address = %s;", [item.get('address', self.default)])
+            address_response = self.cur.fetchone()
+            if address_response is None:
+                self.cur.execute("INSERT INTO addresses (address) VALUES (%s);", [item.get('address', self.default)])
+                self.con.commit()
+                self.cur.execute("SELECT LAST_INSERT_ID();")
+                address_response = self.cur.fetchone()
+            address_id = address_response[0]
 
-        data = [tuple(item.get(db_keymap.get(key)) for key in db_keymap.keys())]
-
-        # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
-        #     address_response = self.cursor.fetchone()
-        #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-        #         self.conn.commit()
-        #         self.cursor.execute("SELECT LAST_INSERT_ID();")
-        #         address_response = self.cursor.fetchone()
-
-        #     address_id = address_response[0]
+            cols = [col for col in db_keymap.keys()]
+            wildcards = ','.join(['%s'] * len(cols))
+            columns = ','.join('`%s`' % col for col in cols)
+            sql_insert = "INSERT INTO boroughs (address_id, %(columns)s) VALUES (%(address_id)d,%(wildcards)s);" % {'columns':columns, 'address_id':address_id, 'wildcards':wildcards}
+            data = tuple(item.get(db_keymap.get(col), self.default) for col in cols)
+            self.cur.execute(sql_insert, data)
+            self.con.commit()
+            # import pdb; pdb.set_trace()
+        except MySQLdb.Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
+            return item
 
         #     self.cursor.execute("""INSERT INTO boroughs
         #     (address_id,
