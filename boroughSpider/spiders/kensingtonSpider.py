@@ -28,7 +28,7 @@ class kensigtonSpider(Spider):
   def parse_date_result(self, response):
     #inspect_response(response)
     weeks = []
-    for res in self.create_dates(date(2010, 1, 1), date(date.today().year, (date.today().month+1)%12, 1), timedelta(days=7)):
+    for res in self.create_dates(date(2012, 1, 1), date(date.today().year, (date.today().month+1)%12, 1), timedelta(days=7)):
       weeks.append(res.strftime("%d/%m/%Y"))
 
     for week in weeks[::-1]:

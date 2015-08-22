@@ -78,10 +78,13 @@ class Kensington(object):
             cols = [col for col in db_keymap.keys()]
             wildcards = ','.join(['%s'] * len(cols))
             columns = ','.join('`%s`' % col for col in cols)
-            sql_insert = "INSERT INTO boroughs (address_id, %(columns)s) VALUES (%(address_id)d,%(wildcards)s);" % {'columns':columns, 'address_id':address_id, 'wildcards':wildcards}
+            sql_insert = "INSERT INTO boroughs (address_id, %(columns)s, date_scraped) VALUES (%(address_id)d,%(wildcards)s,NOW());" % {'columns':columns, 'address_id':address_id, 'wildcards':wildcards}
             data = tuple(item.get(db_keymap.get(col), self.default) for col in cols)
-            self.cur.execute(sql_insert, data)
-            self.con.commit()
+            if item.get(db_keymap['case_reference']) == '':
+                return item
+            else:
+                self.cur.execute(sql_insert, data)
+                self.con.commit()
             # import pdb; pdb.set_trace()
         except MySQLdb.Error as err:
             print "Error %d: %s" % (err.args[0], err.args[1])
