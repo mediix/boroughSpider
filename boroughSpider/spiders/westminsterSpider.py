@@ -1,4 +1,4 @@
-from scrapy.spider import Spider
+from scrapy.spiders import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
 from scrapy.item import DictItem, Field
@@ -11,85 +11,64 @@ from datetime import date, datetime, timedelta
 
 class westminsterSpider(Spider):
   name = 'westSpider'
-
-  pipeline = 'Westminster'
-
+  pipeline = ['GenericPipeline']
   domain = 'westminster.gov.uk'
-
-  base_url = ["http://idoxpa.westminster.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=",
-              "http://idoxpa.westminster.gov.uk"]
-
+  base_url = ["dummy", "http://idoxpa.westminster.gov.uk"]
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
-  def create_dates(self, start, end, delta):
-    curr = start
-    while curr < end:
-      yield curr
-      curr += delta
+  custom_settings = {
+      'DOWNLOAD_DELAY': 0.5,
+      'RETRY_ENABLED': True,
+      'CONCURRENT_REQUESTS': 1,
+      'CONCURRNT_REQUESTS_PER_IP': 1,
+      'RANDOM_DOWNLOAD_DELY': False,
+      'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
+      'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+  }
 
-  def create_item_class(self, class_name, field_list):
-
-    fields = {}
-    for field_name in field_list:
-      fields[field_name] = Field()
-
-    fields.update({'domain': Field()})
-    fields.update({'borough': Field()})
-    fields.update({'documents_url': Field()})
-    return type(class_name, (DictItem,), {'fields':fields})
+  def __init__(self, month, **kwargs):
+    self.month = month
 
   def parse(self, response):
     # inspect_response(response)
-    months = []
-
-    for result in self.create_dates(date(2013, 1, 1), date.today(), timedelta(days = 31)):
-      months.append(result.strftime('%b %y'))
-
     parishes = response.xpath("//*[@id='parish']/option/@value").extract()[1:]
     # months = response.xpath("//*[@id='month']/option/@value").extract()
     for parish in parishes:
-      for month in months:
-        yield FormRequest.from_response(response,
+      yield FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
-                          formdata = { 'searchCriteria.parish':str(parish),
-                                       'month':str(month),
+                          formdata = { 'searchCriteria.parish':parish.encode('utf-8'),
+                                       'month':self.month,
                                        'dateType':'DC_Validated',
                                        'searchType':'Application' },
                           callback = self.parse_results)
 
   def parse_results(self, response):
     # inspect_response(response)
-    try:
-      yield FormRequest.from_response(response,
+    return [FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
                           formdata = { 'searchCriteria.page':'1',
                                        'action':'page',
                                        'orderBy':'DateReceived',
                                        'orderByDirection':'Descending',
                                        'searchCriteria.resultsPerPage':'100' },
-                          callback = self.parse_long_resutls)
-    except:
-      pass
+                          callback = self.parse_long_resutls)]
 
   def parse_long_resutls(self, response):
     # inspect_response(response)
 
     if response.xpath("//*[@class='pager top']/span[@class='showing']"):
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-        item_url = '{0}{1}'.format(self.base_url[1], str(url))
+        item_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
 
       for href in response.xpath("//p[@class='pager top']/a[@class='page']/@href").extract():
-        nxt_url = '{0}{1}'.format(self.base_url[0], str(href))
+        nxt_url = '{0}{1}'.format(self.base_url[1], href.encode('utf-8'))
         yield FormRequest(nxt_url, method="GET", callback = self.parse_items)
 
     else:
-      try:
-        for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
-          item_url = '{0}{1}'.format(self.base_url[1], str(url))
-          yield FormRequest(item_url, method="GET", callback = self.parse_items)
-      except:
-        pass
+      for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+        item_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
+        yield FormRequest(item_url, method="GET", callback = self.parse_items)
 
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
@@ -99,49 +78,102 @@ class westminsterSpider(Spider):
   def parse_summary(self, response):
     # inspect_response(response)
     strat = (parse_html,)
-
     tab = extract(response.body, strategy=strat)
-    table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    try:
+      table = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    except IndexError as err:
+      pass
 
-    further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
-    further_info_url = '{0}{1}'.format(self.base_url[1], str(further_info_url))
-    return [FormRequest(further_info_url, method = "GET",
+    if response.xpath("//*[@id='subtab_details']/@href").extract():
+      further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
+      further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url.encode('utf-8'))
+      return [FormRequest(further_info_url, method = "GET",
                           meta = {'table':table},
                           callback = self.parse_further_info)]
+    else:
+      pass
 
   def parse_further_info(self, response):
     # inspect_response(response)
-
     table = response.meta['table']
 
     strat = (parse_html,)
-
     tab = extract(response.body, strategy=strat)
-    table.update(list(prototypes.convert_table(tab.xpath("//table")))[0])
-    table = { key.replace(' ', '_').lower(): value[0].encode('utf-8') for key, value in table.items() }
+    try:
+      table_1 = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    except IndexError as err:
+      pass
+    else:
+      table.update(table_1)
 
-    westminsterItem = self.create_item_class('westminsterItem', table.keys())
+    if response.xpath("//*[@id='subtab_dates']").extract():
+      url = response.xpath("//*[@id='subtab_dates']/@href").extract()[0]
+      important_dates = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
+      return FormRequest(important_dates, method="GET", meta={'table':table}, callback=self.parse_important_dates)
 
-    item = westminsterItem()
+    else:
+      table = { k.replace(' ', '_').lower(): v[0].encode('utf-8') for k, v in table.items() }
+
+      for key, value in table.items():
+        try:
+          if value == '':
+            table[key] = ''
+          elif value.isdigit():
+            table[key] = value
+          else:
+            table[key] = parser.parse(value.encode('utf-8')).strftime("%Y-%m-%d")
+        except Exception as err:
+          table[key] = value
+
+      table.update({'borough': "City of Westminster"})
+      table.update({'domain': self.domain})
+
+      try:
+        documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
+        documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+        table.update({'documents_url': documents_url})
+      except Exception as err:
+        table.update({'documents_url': 'n/a'})
+
+      item = table
+      return item
+
+  def parse_important_dates(self, response):
+    # inspect_response(response, self)
+    table = response.meta['table']
+
+    strat = (parse_html,)
+    tab = extract(response.body, strategy=strat)
+    try:
+      table_1 = list(prototypes.convert_table(tab.xpath("//table")))[0]
+    except IndexError as err:
+      pass
+    else:
+      table.update(table_1)
+
+    table = { k.replace(' ', '_').lower(): v[0].encode('utf-8') for k, v in table.items() }
 
     for key, value in table.items():
       try:
         if value == '':
-          item[key] = 'n/a'
+          table[key] = ''
         elif value.isdigit():
-          item[key] = value
+          table[key] = value
         else:
-          item[key] = parser.parse(str(value)).strftime("%Y-%m-%d")
-      except:
-        item[key] = value
+          table[key] = parser.parse(value.encode('utf-8')).strftime("%Y-%m-%d")
+      except Exception as err:
+        table[key] = value
 
-    item['borough'] = "City of Westminster"
-    item['domain'] = self.domain
+    table.update({'borough': "City of Westminster"})
+    table.update({'domain': self.domain})
+
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
+    except Exception as err:
+      table.update({'documents_url': 'n/a'})
+    else:
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
-      item['documents_url'] = documents_url
-    except:
-      item['documents_url'] = "n/a"
+      table.update({'documents_url': documents_url})
 
-    return item
+    item = table
+    return table

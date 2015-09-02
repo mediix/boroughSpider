@@ -6,13 +6,10 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import MySQLdb
 import functools
-import sys
-import re
-import pickle, json
-import os
+import os, sys, re, pickle, json
 from scrapy import log
 
-file_path = "/home/medi/workbench/boroughSpider/mappings/NAME_item_keys.pkl"
+file_path = "/home/medi/workbench/boroughSpider/mappings/NAME_item_keys.json"
 
 def check_spider_pipeline(process_item_method):
     @functools.wraps(process_item_method)
@@ -29,27 +26,27 @@ def check_spider_pipeline(process_item_method):
 def store_keys(item, name):
     """"""
     file_name = file_path.replace('NAME', name)
-    item_keys = item.keys()
+    item_keys = item
 
     if not os.path.isfile(file_name):
-        with open(file_name, 'wb') as f:
+        with open(file_name, 'w') as f:
             json.dump(item_keys, f)
     try:
-        with open(file_name, 'rb') as f:
+        with open(file_name, 'r') as f:
             stored_keys = json.load(f)
     except Exception as err:
-        print "Error opening file: ", err
+        print "Error opening file from store_kyes: ", err
         pass
     if stored_keys:
         diff = list(set(item_keys) - set(stored_keys))
         if diff:
-            print "\n!!!!!!!!DIFF IS: \n", diff
+            print "\n!!!DIFF IS: \n", diff
             stored_keys = stored_keys + diff
-            with open(file_name, 'wb') as f:
+            with open(file_name, 'w') as f:
                 json.dump(stored_keys, f)
     else:
         stored_keys = item_keys
-        with open(file_name, 'wb') as f:
+        with open(file_name, 'w') as f:
             json.dump(stored_keys, f)
 
 class Kensington(object):
@@ -66,26 +63,25 @@ class Kensington(object):
             db_keymap = pickle.load(f)
 
         try:
-            self.cur.execute("SELECT a.id FROM addresses a WHERE a.address = %s;", [item.get('address', self.default)])
+            self.cur.execute("SELECT a.id FROM addresses a WHERE a.address = %s;", [item.get('address')])
             address_response = self.cur.fetchone()
             if address_response is None:
                 self.cur.execute("INSERT INTO addresses (address) VALUES (%s);", [item.get('address', self.default)])
                 self.con.commit()
-                self.cur.execute("SELECT LAST_INSERT_ID();")
-                address_response = self.cur.fetchone()
+                address_response = self.cur.execute("SELECT LAST_INSERT_ID();").fetchone()
+                # address_response = self.cur.fetchone()
             address_id = address_response[0]
 
             cols = [col for col in db_keymap.keys()]
             wildcards = ','.join(['%s'] * len(cols))
             columns = ','.join('`%s`' % col for col in cols)
-            sql_insert = "INSERT INTO boroughs (address_id, %(columns)s, date_scraped) VALUES (%(address_id)d,%(wildcards)s,NOW());" % {'columns':columns, 'address_id':address_id, 'wildcards':wildcards}
+            sql_insert = """INSERT INTO boroughs (address_id, %(columns)s, date_scraped)VALUES (%(address_id)d,%(wildcards)s,NOW());""" % {'columns':columns,'address_id':address_id,'wildcards':wildcards}
             data = tuple(item.get(db_keymap.get(col), self.default) for col in cols)
             if item.get(db_keymap['case_reference']) == '':
                 return item
             else:
                 self.cur.execute(sql_insert, data)
                 self.con.commit()
-            # import pdb; pdb.set_trace()
         except MySQLdb.Error as err:
             print "Error %d: %s" % (err.args[0], err.args[1])
             return item
@@ -329,12 +325,17 @@ class CityOfLondon(object):
         self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
         self.cursor = self.conn.cursor()
         self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
 
     @check_spider_pipeline
     def process_item(self, item, spider):
-        print "From Pipeline -> Item: ", item
-        store_keys(item, self.__class__.__name__)
+        try:
+            store_keys(item, self.__class__.__name__)
+        except Exception as err:
+            print 'Error From process_item: ', err
+        finally:
+            print 'Item keys has been exported to file'
+            return item
+
         # try:
         #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
         #     address_response = self.cursor.fetchone()
@@ -777,75 +778,77 @@ class GenericPipeline(object):
       self.db_columns = []
 
     def table_exists(self, table_name):
-      """"""
-      query = "SHOW TABLES LIKE 'MYTABLE'".replace('MYTABLE', table_name)
-      self.cur.execute(query)
-      tables = self.cur.fetchone()
-      exists = True if tables else False
-      return exists
+        """"""
+        query = "SHOW TABLES LIKE 'MYTABLE'".replace('MYTABLE', table_name)
+        self.cur.execute(query)
+        tables = self.cur.fetchone()
+        exists = True if tables else False
+        return exists
 
     def create_table(self, item, name):
-      """"""
-      column_types = []
-      for it in item.keys():
-        column_types.append((it, 'TEXT'))
-      columns = ',\n'.join('`%s` %s' % x for x in column_types)
-      create = """CREATE TABLE %(table_name)s (id INT(10) PRIMARY KEY AUTO_INCREMENT NOT NULL, %(columns)s, birth DATETIME NOT NULL, time_stamp TIMESTAMP);"""
-      schema = create % {'table_name':name, 'columns':columns}
-      try:
-        self.cur.execute(schema)
-        self.con.commit()
-      except MySQLdb.Error as err:
-        print "Error %d: %s" % (err.args[0], err.args[1])
+        """"""
+        column_types = []
+        for it in item.keys():
+            column_types.append((it, 'TEXT'))
+        columns = ',\n'.join('`%s` %s' % x for x in column_types)
+        create = """CREATE TABLE %(table_name)s (id INT(10) PRIMARY KEY AUTO_INCREMENT NOT NULL, %(columns)s, birth DATETIME NOT NULL, time_stamp TIMESTAMP);"""
+        schema = create % {'table_name':name, 'columns':columns}
+        try:
+            self.cur.execute(schema)
+            self.con.commit()
+        except MySQLdb.Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
 
-      return item.keys()
+        return item.keys()
 
     def check_db(self, diff_list, name):
-      """"""
-      import os
-      path = os.getcwd()
-      with open(path+'/%s.txt' % (name), 'w') as f:
-        f.write('\n'.join(diff_list))
+        """"""
+        column_types = []
+        for it in diff_list:
+            column_types.append(('ADD COLUMN `%s`' % it, 'TEXT'))
+        columns = ',\n'.join('%s %s' % x for x in column_types)
+        alter_sql = "ALTER TABLE %(table)s %(columns)s AFTER %(column)s;" % {'table':name, 'columns':columns, 'column':self.db_columns[-1]}
+        try:
+            self.cur.execute(alter_sql)
+            self.con.commit()
+        except MySQLdb.Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
 
-      column_types = []
-      for it in diff_list:
-        column_types.append(('ADD COLUMN `%s`' % it, 'TEXT'))
-      columns = ',\n'.join('%s %s' % x for x in column_types)
-      alter_sql = "ALTER TABLE %(table)s %(columns)s AFTER %(column)s;" % {'table':name, 'columns':columns, 'column':self.db_columns[-1]}
-      try:
-        self.cur.execute(alter_sql)
-        self.con.commit()
-      except MySQLdb.Error as err:
-        print "Error %d: %s" % (err.args[0], err.args[1])
-
-      return self.db_columns + diff_list
+        return self.db_columns + diff_list
 
     def insert(self, item, name):
-      """"""
-      sql = "SHOW COLUMNS FROM TABLE;".replace('TABLE', name)
-      self.cur.execute(sql)
-      cols = self.cur.fetchall()
-      cols = [col[0].encode('utf-8') for col in cols[1:-2]]
-      col_names = ','.join('`%s`' % col for col in cols)
-      wildcards = ','.join(['%s'] * len(cols))
-      insert_sql = "INSERT INTO %s (%s, birth) VALUES (%s,NOW());" % (name, col_names, wildcards)
-      data = tuple([item.get(col, 'n/a') for col in cols])
-      self.cur.execute(insert_sql, data)
-      self.con.commit()
+        """"""
+        sql = "SHOW COLUMNS FROM TABLE;".replace('TABLE', name)
+        self.cur.execute(sql)
+        cols = self.cur.fetchall()
+        cols = [col[0].encode('utf-8') for col in cols[1:-2]]
+        col_names = ','.join('`%s`' % col for col in cols)
+        wildcards = ','.join(['%s'] * len(cols))
+        insert_sql = "INSERT INTO %s (%s, birth) VALUES (%s,NOW());" % (name, col_names, wildcards)
+        data = tuple([item.get(col, 'n/a') for col in cols])
+        self.cur.execute(insert_sql, data)
+        self.con.commit()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
-      """"""
-      # print "Item: ", item
-      spider_class = spider.__class__.__name__
-      # self.db_columns = item.keys()
-      if self.table_exists(spider_class) is False:
-        self.db_columns = self.create_table(item, spider_class)
-      item_keys = item.keys()
-      diff = list(set(item_keys) - set(self.db_columns))
-      if diff:
-        self.db_columns = self.check_db(diff, spider_class)
-      try:
-        self.insert(item, spider_class)
-      except Exception as err:
-        print "ERROR Froom process_item: ", err
+        """"""
+        spider_class = spider.__class__.__name__
+        self.db_columns = item.keys()
+        try:
+            store_keys(item.keys(), spider_class)
+        except Exception as err:
+            print 'Error From process_item: ', err
+        else:
+            print 'Item keys has been exported to file'
+        # print "Item: ", item
+        ##
+        if self.table_exists(spider_class) is False:
+            self.db_columns = self.create_table(item, spider_class)
+        item_keys = item.keys()
+        diff = list(set(item_keys) - set(self.db_columns))
+        if diff:
+            self.db_columns = self.check_db(diff, spider_class)
+        try:
+            self.insert(item, spider_class)
+        except Exception as err:
+            print "ERROR Froom process_item: ", err

@@ -9,25 +9,10 @@
 #
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'itempider (+http://www.yourdomain.com)'
-USER_AGENT = "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36"
-
 BOT_NAME = 'boroughSpider'
 
 SPIDER_MODULES = ['boroughSpider.spiders']
 NEWSPIDER_MODULE = 'boroughSpider.spiders'
-
-# DOWNLOAD_DELAY = 1.25
-COOKIES_ENABLED = False
-# CONCURRENT_REQUESTS=1
-# CONCURRNT_REQUESTS_PER_IP=1
-# RANDOM_DOWNLOAD_DELY=False
-# CONCURRENT_REQUESTS_PER_DOMAIN = 2
-# COOKIES_DEBUG = True
-
-# DOWNLOADER_MIDDLEWARES = {
-#     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
-#     'boroughSpider.middlewares.ProxyMiddleware': 100,
-# }
 
 ITEM_PIPELINES = {
     'boroughSpider.pipelines.Westminster',
@@ -41,7 +26,18 @@ ITEM_PIPELINES = {
     'boroughSpider.pipelines.GenericPipeline'
 }
 
-files_storage = '/home/medi/UK_data/Medi/Application_documents_1/'
+# DOWNLOAD_DELAY = 1.25
+# COOKIES_ENABLED = False
+# CONCURRENT_REQUESTS=1
+# CONCURRNT_REQUESTS_PER_IP=1
+# RANDOM_DOWNLOAD_DELY=False
+# CONCURRENT_REQUESTS_PER_DOMAIN = 2
+# COOKIES_DEBUG = True
+
+# DOWNLOADER_MIDDLEWARES = {
+#     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+#     'boroughSpider.middlewares.ProxyMiddleware': 100,
+# }
 ##############################################################################
 '''
 EXPORT_FIELDS = [

@@ -1,6 +1,6 @@
-from scrapy.spider import Spider
+from scrapy.spiders import Spider
 from scrapy.shell import inspect_response
-from scrapy.http import Request, FormRequest
+from scrapy.http import FormRequest
 
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
@@ -9,12 +9,22 @@ from dateutil import parser
 
 class cityOfLondonSpider(Spider):
   name = 'londSpider'
-  pipeline = ['CityOfLondon', 'GenericPipeline']
+  pipeline = ['GenericPipeline']
   domain = 'cityoflondon.gov.uk'
   base_url = ["dummy", "http://www.planning2.cityoflondon.gov.uk"]
   start_urls = ["http://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=monthlyList"]
 
-  def __init__(self, month=None):
+  custom_settings = {
+      'DOWNLOAD_DELAY': 0.5,
+      'RETRY_ENABLED': True,
+      'CONCURRENT_REQUESTS': 1,
+      'CONCURRNT_REQUESTS_PER_IP': 1,
+      'RANDOM_DOWNLOAD_DELY': False,
+      'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
+      'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+  }
+
+  def __init__(self, month, **kwargs):
     self.month = month
 
   def parse(self, response):
@@ -45,7 +55,7 @@ class cityOfLondonSpider(Spider):
     # if there exists pagination
     if response.xpath("//*[@class='pager top']/span[@class='showing']"):
       # parse current page items
-      for href in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
+      for href in response.xpath("//*[@id='searchresu lts']//li/a/@href").extract():
         item_url = '{0}{1}'.format(self.base_url[1], href.encode('utf-8'))
         yield FormRequest(item_url, method="GET", callback = self.parse_summary)
       # parse the next page of items
@@ -162,87 +172,6 @@ class cityOfLondonSpider(Spider):
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       table.update({'documents_url': documents_url})
 
-    if documents_url:
-      self.downloader(documents_url, response.headers['Set-Cookie'])
-
     item = table
-    return item
-
-  def downloader(self, url=None, cookie=None):
-    """"""
-    def select(data=None):
-      """"""
-      vals = []
-      for key, value in data.items():
-        for elem in value:
-          for k, v in elem.items():
-            if v == 'Application Form':
-              vals.append(elem.get('view'))
-      return (key, vals)
-
-    try:
-      import requests
-      from bs4 import BeautifulSoup
-      from boroughSpider.settings import files_storage
-    except ImportError as err:
-      print err
-
-    print "FILE STORAGE: ", files_storage
-    resp = requests.get(url, cookies=cookie)
-    resp.encoding = 'utf-8'
-    soup = BeautifulSoup(resp.text)
-    docs_table = soup.find('table', {'id': 'Documents'})  # City of Westminster
-    #
-    keys = []
-    for th in docs_table.findAll('th'):
-      keys.append(str(th.get_text(strip=True)).lower().replace(' ', '_'))
-
-    data = []
-    for tr in docs_table.findAll('tr')[1:]: # skip the table header
-      vals = []
-      for td in tr.findAll('td'):
-        if td.find('a'):
-          vals.append(self.base_url[1] + td.find('a').get('href'))
-        else:
-          vals.append(td.get_text(strip=True))
-      #
-      data.append(dict(zip(keys, vals)))
-
-    data = select(data)
-    key = data[0]
-    item = data[1]
-    file_name = '_application_form'
-    ext = '.pdf'
-    fk = lambda x: x.replace('/', '_')
-
-    if len(item) == 0:
-      print "NO file to download"
-    elif len(item) > 1:
-      for idx, it in enumerate(item):
-        try:
-          name = files_storage + fk(key) + file_name + '_' + str(idx+1) + ext
-          # url = it
-          # url_parts = url.split('?')
-          # url_parts[1] = urlencode({'test':url_parts[1]})
-          # url = '{0}?{1}'.format(url_parts[0], url_parts[1])
-          response = requests.get(it, cookies=cookie)
-          f = open(name, 'wb')
-          f.write(response.content)
-        except Exception, e:
-          print "ERROR FROM download_resource: elif: ", e
-        else:
-          print "%s Download Completed" % (fk(key)+file_name+'_'+str(idx+1)+ext)
-          f.close()
-    else:
-      try:
-        print item
-        response = requests.get(item[0])
-        f = open(files_storage + fk(key) + file_name + ext, 'wb')
-        f.write(response.content)
-      except Exception as e:
-        print "ERROR FROM download_source: else", e
-      else:
-        print "%s Download Completed" % (fk(key)+file_name+ext)
-        f.close()
-
+    return table
 
