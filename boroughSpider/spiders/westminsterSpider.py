@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 class westminsterSpider(Spider):
   name = 'westSpider'
   pipeline = ['GenericPipeline']
-  domain = 'westminster.gov.uk'
+  domain = 'http://idoxpa.westminster.gov.uk'
   base_url = ["dummy", "http://idoxpa.westminster.gov.uk"]
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
 
@@ -32,7 +32,6 @@ class westminsterSpider(Spider):
   def parse(self, response):
     # inspect_response(response)
     parishes = response.xpath("//*[@id='parish']/option/@value").extract()[1:]
-    # months = response.xpath("//*[@id='month']/option/@value").extract()
     for parish in parishes:
       yield FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
@@ -59,21 +58,21 @@ class westminsterSpider(Spider):
     if response.xpath("//*[@class='pager top']/span[@class='showing']"):
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
         item_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
-        yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+        yield FormRequest(item_url, method="GET", callback=self.parse_summary)
 
       for href in response.xpath("//p[@class='pager top']/a[@class='page']/@href").extract():
         nxt_url = '{0}{1}'.format(self.base_url[1], href.encode('utf-8'))
-        yield FormRequest(nxt_url, method="GET", callback = self.parse_items)
+        yield FormRequest(nxt_url, method="GET", callback=self.parse_items)
 
     else:
       for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
         item_url = '{0}{1}'.format(self.base_url[1], url.encode('utf-8'))
-        yield FormRequest(item_url, method="GET", callback = self.parse_items)
+        yield FormRequest(item_url, method="GET", callback=self.parse_summary)
 
   def parse_items(self, response):
     for url in response.xpath("//*[@id='searchresults']//li/a/@href").extract():
       item_url = '{0}{1}'.format(self.base_url[1], str(url))
-      yield FormRequest(item_url, method="GET", callback = self.parse_summary)
+      yield FormRequest(item_url, method="GET", callback=self.parse_summary)
 
   def parse_summary(self, response):
     # inspect_response(response)
@@ -88,8 +87,8 @@ class westminsterSpider(Spider):
       further_info_url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
       further_info_url = '{0}{1}'.format(self.base_url[1], further_info_url.encode('utf-8'))
       return [FormRequest(further_info_url, method = "GET",
-                          meta = {'table':table},
-                          callback = self.parse_further_info)]
+                                            meta = {'table':table},
+                                            callback = self.parse_further_info)]
     else:
       pass
 
@@ -130,12 +129,11 @@ class westminsterSpider(Spider):
 
       try:
         documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-        documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+        documents_url = '{0}{1}'.format(self.base_url[1], documents_url.encode('utf-8'))
         table.update({'documents_url': documents_url})
       except Exception as err:
         table.update({'documents_url': 'n/a'})
 
-      item = table
       return item
 
   def parse_important_dates(self, response):
@@ -172,8 +170,7 @@ class westminsterSpider(Spider):
     except Exception as err:
       table.update({'documents_url': 'n/a'})
     else:
-      documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
+      documents_url = '{0}{1}'.format(self.base_url[1], documents_url.encode('utf-8'))
       table.update({'documents_url': documents_url})
 
-    item = table
     return table

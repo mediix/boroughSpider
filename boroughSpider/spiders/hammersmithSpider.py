@@ -12,8 +12,8 @@ import time, json
 
 class HammersmithSpider(Spider):
   name = 'hammSpider'
-  domain = 'ibhf.gov.uk'
-  pipeline = ['GenericPipeline']
+  domain = 'http://www.lbhf.gov.uk'
+  pipeline = ['Hammersmith']
   base_url = ["dummy", "http://public-access.lbhf.gov.uk"]
   start_urls = ["http://public-access.lbhf.gov.uk/online-applications/search.do?action=monthlyList"]
 

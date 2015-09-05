@@ -5,11 +5,9 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import MySQLdb
+from boroughSpider.extras import *
 import functools
-import os, sys, re, pickle, json
 from scrapy import log
-
-file_path = "/home/medi/workbench/boroughSpider/mappings/NAME_item_keys.json"
 
 def check_spider_pipeline(process_item_method):
     @functools.wraps(process_item_method)
@@ -23,480 +21,370 @@ def check_spider_pipeline(process_item_method):
             return item
     return wrapper
 
-def store_keys(item, name):
-    """"""
-    file_name = file_path.replace('NAME', name)
-    item_keys = item
-
-    if not os.path.isfile(file_name):
-        with open(file_name, 'w') as f:
-            json.dump(item_keys, f)
-    try:
-        with open(file_name, 'r') as f:
-            stored_keys = json.load(f)
-    except Exception as err:
-        print "Error opening file from store_kyes: ", err
-        pass
-    if stored_keys:
-        diff = list(set(item_keys) - set(stored_keys))
-        if diff:
-            print "\n!!!DIFF IS: \n", diff
-            stored_keys = stored_keys + diff
-            with open(file_name, 'w') as f:
-                json.dump(stored_keys, f)
-    else:
-        stored_keys = item_keys
-        with open(file_name, 'w') as f:
-            json.dump(stored_keys, f)
 
 class Kensington(object):
-    def __init__(self):
-        self.con = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cur = self.con.cursor()
-        self.default = ''
-
+    """"""
     @check_spider_pipeline
     def process_item(self, item, spider):
-        sp_name = self.__class__.__name__
-        # store_keys(item, sp_name)
-        with open(file_path.replace('NAME', sp_name), 'rb') as f:
-            db_keymap = pickle.load(f)
-
+        # sp_name = self.__class__.__name__
         try:
-            self.cur.execute("SELECT a.id FROM addresses a WHERE a.address = %s;", [item.get('address')])
-            address_response = self.cur.fetchone()
-            if address_response is None:
-                self.cur.execute("INSERT INTO addresses (address) VALUES (%s);", [item.get('address', self.default)])
-                self.con.commit()
-                address_response = self.cur.execute("SELECT LAST_INSERT_ID();").fetchone()
-                # address_response = self.cur.fetchone()
-            address_id = address_response[0]
-
-            cols = [col for col in db_keymap.keys()]
-            wildcards = ','.join(['%s'] * len(cols))
-            columns = ','.join('`%s`' % col for col in cols)
-            sql_insert = """INSERT INTO boroughs (address_id, %(columns)s, date_scraped)VALUES (%(address_id)d,%(wildcards)s,NOW());""" % {'columns':columns,'address_id':address_id,'wildcards':wildcards}
-            data = tuple(item.get(db_keymap.get(col), self.default) for col in cols)
-            if item.get(db_keymap['case_reference']) == '':
-                return item
-            else:
-                self.cur.execute(sql_insert, data)
-                self.con.commit()
-        except MySQLdb.Error as err:
+            address_id = check_address(item.get('address'))
+            cur.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            polling_district,
+            listed_building_grade,
+            conservation_area,
+            applicants_name,
+            contact_name,
+            contact_address,
+            contact_telephone,
+            application_type,
+            proposed_development,
+            date_received,
+            registration_date,
+            public_consultation_ends,
+            application_status,
+            target_date_for_decision,
+            decision,
+            decision_date,
+            conditions_and_reasons,
+            formal_reference_number,
+            appeal_received,
+            appeal_start_date,
+            appeal_decision,
+            appeal_decision_date,
+            planning_case_officer,
+            planning_team,
+            documents_url,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                        %s, %s, NOW())""",
+            (address_id,
+            item.get('borough', default),
+            item.get('domain', default),
+            item.get('case_reference', default),
+            item.get('ward', default),
+            item.get('polling_district', default),
+            item.get('listed_building_grade', default),
+            item.get('conservation_area', default),
+            item.get("applicant's_name", default),
+            item.get('contact_name', default),
+            item.get('contact_address', default),
+            item.get('contact_telephone', default),
+            item.get('application_type', default),
+            item.get('proposed_development', default),
+            item.get('date_received', default),
+            item.get('registration_date_(statutory_start_date)', default),
+            item.get('public_consultation_ends', default),
+            item.get('application_status', default),
+            item.get('target_date_for_decision', default),
+            item.get('decision', default),
+            item.get('decision_date', default),
+            item.get('conditions_and_reasons', default),
+            item.get('formal_reference_number', default),
+            item.get('appeal_received', default),
+            item.get('appeal_start_date', default),
+            item.get('appeal_decision', default),
+            item.get('appeal_decision_date', default),
+            item.get('planning_case_officer', default),
+            item.get('planning_team', default),
+            item.get('documents_url', default)))
+            con.commit()
+        except db_Error as err:
             print "Error %d: %s" % (err.args[0], err.args[1])
             return item
 
-        #     self.cursor.execute("""INSERT INTO boroughs
-        #     (address_id,
-        #     borough,
-        #     domain,
-        #     case_reference,
-        #     ward,
-        #     polling_district,
-        #     listed_building_grade,
-        #     conservation_area,
-        #     applicants_name,
-        #     contact_name,
-        #     contact_address,
-        #     contact_telephone,
-        #     application_type,
-        #     proposed_development,
-        #     date_received,
-        #     registration_date,
-        #     public_consultation_ends,
-        #     application_status,
-        #     target_date_for_decision,
-        #     decision,
-        #     decision_date,
-        #     conditions_and_reasons,
-        #     formal_reference_number,
-        #     appeal_received,
-        #     appeal_start_date,
-        #     appeal_decision,
-        #     appeal_decision_date,
-        #     planning_case_officer,
-        #     planning_team,
-        #     documents_url,
-        #     date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-        #                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-        #                                 %s, %s, NOW())""",
-        #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('case_reference', self.default),
-        #     item.get('ward', self.default),
-        #     item.get('polling_district', self.default),
-        #     item.get('listed_building_grade', self.default),
-        #     item.get('conservation_area', self.default),
-        #     item.get("applicant's_name", self.default),
-        #     item.get('contact_name', self.default),
-        #     item.get('contact_address', self.default),
-        #     item.get('contact_telephone', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposed_development', self.default),
-        #     item.get('date_received', self.default),
-        #     item.get('registration_date_(statutory_start_date)', self.default),
-        #     item.get('public_consultation_ends', self.default),
-        #     item.get('application_status', self.default),
-        #     item.get('target_date_for_decision', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('conditions_and_reasons', self.default),
-        #     item.get('formal_reference_number', self.default),
-        #     item.get('appeal_received', self.default),
-        #     item.get('appeal_start_date', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_decision_date', self.default),
-        #     item.get('planning_case_officer', self.default),
-        #     item.get('planning_team', self.default),
-        #     item.get('documents_url', self.default)))
-        #     self.conn.commit()
-        # except MySQLdb.Error, e:
-        #     print "Error %d: %s" % (e.args[0], e.args[1])
-        #     return item
-
 
 class Hammersmith(object):
-
-    def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
-
+    """"""
     @check_spider_pipeline
     def process_item(self, item, spider):
-        store_keys(item, self.__class__.__name__)
-        # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
-        #     address_response = self.cursor.fetchone()
-        #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-        #         self.conn.commit()
-        #         self.cursor.execute("SELECT LAST_INSERT_ID();")
-        #         address_response = self.cursor.fetchone()
-
-        #     address_id = address_response[0]
-
-        #     self.cursor.execute("""INSERT INTO boroughs
-        #     (address_id,
-        #     borough,
-        #     domain,
-        #     case_reference,
-        #     ward,
-        #     applicants_name,
-        #     application_type,
-        #     proposed_development,
-        #     application_status,
-        #     decision,
-        #     decision_date,
-        #     appeal_decision,
-        #     appeal_decision_date,
-        #     documents_url,
-        #     planning_portal_reference,
-        #     application_registration,
-        #     application_validation,
-        #     appeal_status,
-        #     expected_decision_level,
-        #     agent_name,
-        #     agency_company_name,
-        #     environmental_assessment_requested,
-        #     closing_date_for_comments,
-        #     statutory_expiry_date,
-        #     agreed_expiry_date,
-        #     permission_expiry_date,
-        #     temporary_permission_expiry_date,
-        #     constraints,
-        #     date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
-        #                                         %s, %s, %s, %s, %s, %s, %s, %s,
-        #                                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
-        #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('reference', self.default),
-        #     item.get('ward', self.default),
-        #     item.get('applicant_name', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('expected_decision_level', self.default),
-        #     item.get('agent_name', self.default),
-        #     item.get('agent_company_name', self.default),
-        #     item.get('environmental_assessment_requested', self.default),
-        #     item.get('closing_date_for_comments', self.default),
-        #     item.get('statutory_expiry_date', self.default),
-        #     item.get('agreed_expiry_date', self.default),
-        #     item.get('permission_expiry_date', self.default),
-        #     item.get('temporary_permission_expiry_date', self.default),
-        #     item.get('constraints', self.default)))
-        #     self.conn.commit()
-        # except MySQLdb.Error, e:
-        #     print "Error %d: %s" % (e.args[0], e.args[1])
-        #     return item
+        # store_keys(item, self.__class__.__name__)
+        try:
+            address_id = check_address(item.get('address'))
+            cur.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            applicants_name,
+            application_type,
+            proposed_development,
+            application_status,
+            decision,
+            decision_date,
+            date_received,
+            appeal_decision,
+            appeal_decision_date,
+            documents_url,
+            planning_portal_reference,
+            application_registration,
+            application_validation,
+            appeal_status,
+            expected_decision_level,
+            agent_name,
+            agency_company_name,
+            environmental_assessment_requested,
+            closing_date_for_comments,
+            statutory_expiry_date,
+            agreed_expiry_date,
+            permission_expiry_date,
+            temporary_permission_expiry_date,
+            constraints,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
+            (address_id,
+            item.get('borough', default),
+            item.get('domain', default),
+            item.get('reference', default),
+            item.get('ward', default),
+            item.get('applicant_name', default),
+            item.get('application_type', default),
+            item.get('proposal', default),
+            item.get('status', default),
+            item.get('decision', default),
+            item.get('decision_date', default),
+            item.get('application_registered_date', default),
+            item.get('appeal_decision', default),
+            item.get('appeal_status', default),
+            item.get('documents_url', default),
+            item.get('planning_portal_reference', default),
+            item.get('application_registered', default),
+            item.get('application_validated', default),
+            item.get('appeal_status', default),
+            item.get('expected_decision_level', default),
+            item.get('agent_name', default),
+            item.get('agent_company_name', default),
+            item.get('environmental_assessment_requested', default),
+            item.get('closing_date_for_comments', default),
+            item.get('statutory_expiry_date', default),
+            item.get('agreed_expiry_date', default),
+            item.get('permission_expiry_date', default),
+            item.get('temporary_permission_expiry_date', default),
+            item.get('constraints', default)))
+            con.commit()
+        except db_Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
+            return item
 
 class Westminster(object):
-
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
+        self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
-        store_keys(item, self.__class__.__name__)
-        # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
-        #     address_response = self.cursor.fetchone()
-        #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-        #         self.conn.commit()
-        #         self.cursor.execute("SELECT LAST_INSERT_ID();")
-        #         address_response = self.cursor.fetchone()
-
-        #     address_id = address_response[0]
-
-        #     self.cursor.execute("""INSERT INTO boroughs
-        #     (address_id,
-        #     borough,
-        #     domain,
-        #     case_reference,
-        #     ward,
-        #     planning_case_officer,
-        #     proposed_development,
-        #     application_status,
-        #     decision,
-        #     appeal_decision,
-        #     appeal_status,
-        #     application_type,
-        #     amenity_society,
-        #     district_reference,
-        #     applicants_name,
-        #     contact_address,
-        #     agent_name,
-        #     agency_company_name,
-        #     agent_address,
-        #     environmental_assessment_requested,
-        #     application_received_date,
-        #     application_validated_date,
-        #     documents_url,
-        #     date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-        #                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-        #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('reference', self.default),
-        #     item.get('ward', self.default),
-        #     item.get('case_officer', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('amenity_society', self.default),
-        #     item.get('district_reference', self.default),
-        #     item.get('applicant_name', self.default),
-        #     item.get('applicant_address', self.default),
-        #     item.get('case_officer', self.default),
-        #     item.get('agent_company_name', self.default),
-        #     item.get('agent_address', self.default),
-        #     item.get('environmental_assessment_requested', self.default),
-        #     item.get('application_received', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('documents_url', self.default)))
-        #     self.conn.commit()
-        # except MySQLdb.Error, e:
-        #     print "Error %d: %s" % (e.args[0], e.args[1])
-        #     return item
+        # store_keys(item, self.__class__.__name__)
+        try:
+            address_id = check_address(item.get('addresse', default))
+            self.cur.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            planning_case_officer,
+            proposed_development,
+            application_status,
+            decision,
+            appeal_decision,
+            appeal_status,
+            application_type,
+            amenity_society,
+            district_reference,
+            applicants_name,
+            contact_address,
+            agent_name,
+            agency_company_name,
+            agent_address,
+            environmental_assessment_requested,
+            application_received_date,
+            application_validated_date,
+            documents_url,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+            (address_id,
+            item.get('borough', default),
+            item.get('domain', default),
+            item.get('reference', default),
+            item.get('ward', default),
+            item.get('case_officer', default),
+            item.get('proposal', default),
+            item.get('status', default),
+            item.get('decision', default),
+            item.get('appeal_decision', default),
+            item.get('appeal_status', default),
+            item.get('application_type', default),
+            item.get('amenity_society', default),
+            item.get('district_reference', default),
+            item.get('applicant_name', default),
+            item.get('applicant_address', default),
+            item.get('case_officer', default),
+            item.get('agent_company_name', default),
+            item.get('agent_address', default),
+            item.get('environmental_assessment_requested', default),
+            item.get('application_received', default),
+            item.get('application_validated', default),
+            item.get('documents_url', default)))
+            con.commit()
+        except db_Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
+            return item
 
 
 class CityOfLondon(object):
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
+       self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         try:
-            store_keys(item, self.__class__.__name__)
-        except Exception as err:
-            print 'Error From process_item: ', err
-        finally:
-            print 'Item keys has been exported to file'
+            address_id = check_address(item.get('address', default))
+            self.cursor.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            applicants_name,
+            application_type,
+            proposed_development,
+            application_status,
+            decision,
+            decision_date,
+            appeal_decision,
+            appeal_decision_date,
+            documents_url,
+            planning_portal_reference,
+            application_registration,
+            application_validation,
+            appeal_status,
+            expected_decision_level,
+            agent_name,
+            agency_company_name,
+            environmental_assessment_requested,
+            closing_date_for_comments,
+            statutory_expiry_date,
+            agreed_expiry_date,
+            permission_expiry_date,
+            temporary_permission_expiry_date,
+            constraints,
+            date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
+            (address_id,
+            item.get('borough', default),
+            item.get('domain', default),
+            item.get('reference', default),
+            item.get('ward', default),
+            item.get('applicant_name', default),
+            item.get('application_type', default),
+            item.get('proposal', default),
+            item.get('status', default),
+            item.get('decision', default),
+            item.get('decision_date', default),
+            item.get('appeal_decision', default),
+            item.get('appeal_status', default),
+            item.get('documents_url', default),
+            item.get('planning_portal_reference', default),
+            item.get('application_registered', default),
+            item.get('application_validated', default),
+            item.get('appeal_status', default),
+            item.get('expected_decision_level', default),
+            item.get('agent_name', default),
+            item.get('agent_company_name', default),
+            item.get('environmental_assessment_requested', default),
+            item.get('closing_date_for_comments', default),
+            item.get('statutory_expiry_date', default),
+            item.get('agreed_expiry_date', default),
+            item.get('permission_expiry_date', default),
+            item.get('temporary_permission_expiry_date', default),
+            item.get('constraints', default)))
+            con.commit()
+        except db_Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
             return item
-
-        # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
-        #     address_response = self.cursor.fetchone()
-        #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
-        #         self.conn.commit()
-        #         self.cursor.execute("SELECT LAST_INSERT_ID();")
-        #         address_response = self.cursor.fetchone()
-
-        #     address_id = address_response[0]
-
-        #     self.cursor.execute("""INSERT INTO boroughs
-        #     (address_id,
-        #     borough,
-        #     domain,
-        #     case_reference,
-        #     ward,
-        #     applicants_name,
-        #     application_type,
-        #     proposed_development,
-        #     application_status,
-        #     decision,
-        #     decision_date,
-        #     appeal_decision,
-        #     appeal_decision_date,
-        #     documents_url,
-        #     planning_portal_reference,
-        #     application_registration,
-        #     application_validation,
-        #     appeal_status,
-        #     expected_decision_level,
-        #     agent_name,
-        #     agency_company_name,
-        #     environmental_assessment_requested,
-        #     closing_date_for_comments,
-        #     statutory_expiry_date,
-        #     agreed_expiry_date,
-        #     permission_expiry_date,
-        #     temporary_permission_expiry_date,
-        #     constraints,
-        #     date_scraped) VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
-        #                             %s, %s, %s, %s, %s, %s, %s, %s,
-        #                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
-        #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('reference', self.default),
-        #     item.get('ward', self.default),
-        #     item.get('applicant_name', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('expected_decision_level', self.default),
-        #     item.get('agent_name', self.default),
-        #     item.get('agent_company_name', self.default),
-        #     item.get('environmental_assessment_requested', self.default),
-        #     item.get('closing_date_for_comments', self.default),
-        #     item.get('statutory_expiry_date', self.default),
-        #     item.get('agreed_expiry_date', self.default),
-        #     item.get('permission_expiry_date', self.default),
-        #     item.get('temporary_permission_expiry_date', self.default),
-        #     item.get('constraints', self.default)))
-        #     self.conn.commit()
-        # except MySQLdb.Error, e:
-        #     print "Error %d: %s" % (e.args[0], e.args[1])
-        #     return item
 
 
 class Wandsworth(object):
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
+        self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
-        store_keys(item, self.__class__.__name__)
-        # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
-        #     address_response = self.cursor.fetchone()
-        #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('site_address', self.default)])
-        #         self.conn.commit()
-        #         self.cursor.execute("SELECT LAST_INSERT_ID();")
-        #         address_response = self.cursor.fetchone()
-        #     address_id = address_response[0]
-
-        #     self.cursor.execute("""INSERT INTO boroughs
-        #     (address_id,
-        #     borough,
-        #     domain,
-        #     case_reference,
-        #     ward,
-        #     applicants_name,
-        #     application_type,
-        #     proposed_development,
-        #     application_status,
-        #     decision,
-        #     decision_date,
-        #     appeal_decision,
-        #     appeal_decision_date,
-        #     documents_url,
-        #     planning_portal_reference,
-        #     application_registration,
-        #     application_validation,
-        #     appeal_status,
-        #     expected_decision_level,
-        #     agent_name,
-        #     date_scraped) values (%s, %s, %s, %s, %s, %s, %s, %s,
-        #                             %s, %s, %s, %s, %s, %s, %s, %s,
-        #                             %s, %s, %s, %s, NOW());""",
-        #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('application_number', self.default),
-        #     item.get('wards', self.default),
-        #     item.get('applicant', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_submitted', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('appeal_lodged', self.default),
-        #     item.get('expected_decision_level', self.default),
-        #     item.get('case_officer_tel', self.default)))
-        #     self.conn.commit()
-        # except MySQLdb.Error, e:
-        #     print "Error %d: %s" % (e.args[0], e.args[1])
-        #     return item
+        # store_keys(item, self.__class__.__name__)
+        try:
+            address_id = check_address(item.get('site_address'))
+            self.cursor.execute("""INSERT INTO boroughs
+            (address_id,
+            borough,
+            domain,
+            case_reference,
+            ward,
+            applicants_name,
+            application_type,
+            proposed_development,
+            application_status,
+            decision,
+            decision_date,
+            appeal_decision,
+            appeal_decision_date,
+            documents_url,
+            planning_portal_reference,
+            application_registration,
+            application_validation,
+            appeal_status,
+            expected_decision_level,
+            agent_name,
+            date_scraped) values (%s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s,
+                                        %s, %s, %s, %s, NOW());""",
+            (address_id,
+            item.get('borough', default),
+            item.get('domain', default),
+            item.get('application_number', default),
+            item.get('wards', default),
+            item.get('applicant', default),
+            item.get('application_type', default),
+            item.get('proposal', default),
+            item.get('status', default),
+            item.get('decision', default),
+            item.get('decision_date', default),
+            item.get('appeal_decision', default),
+            item.get('appeal_submitted', default),
+            item.get('documents_url', default),
+            item.get('planning_portal_reference', default),
+            item.get('application_registered', default),
+            item.get('application_validated', default),
+            item.get('appeal_lodged', default),
+            item.get('expected_decision_level', default),
+            item.get('case_officer_tel', default)))
+            con.commit()
+        except db_Error as err:
+            print "Error %d: %s" % (err.args[0], err.args[1])
+            return item
 
 class Hackney(object):
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
+        self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         store_keys(item, self.__class__.__name__)
         # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
+        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', default)])
         #     address_response = self.cursor.fetchone()
         #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('site_address', self.default)])
+        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('site_address', default)])
         #         self.conn.commit()
         #         self.cursor.execute("SELECT LAST_INSERT_ID();")
         #         address_response = self.cursor.fetchone()
@@ -527,46 +415,43 @@ class Hackney(object):
         #                             %s, %s, %s, %s, %s, %s, %s, %s,
         #                             %s, %s, %s, %s, NOW());""",
         #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('application_number', self.default),
-        #     item.get('wards', self.default),
-        #     item.get('applicant', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_submitted', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('appeal_lodged', self.default),
-        #     item.get('expected_decision_level', self.default),
-        #     item.get('case_officer_tel', self.default)))
+        #     item.get('borough', default),
+        #     item.get('domain', default),
+        #     item.get('application_number', default),
+        #     item.get('wards', default),
+        #     item.get('applicant', default),
+        #     item.get('application_type', default),
+        #     item.get('proposal', default),
+        #     item.get('status', default),
+        #     item.get('decision', default),
+        #     item.get('decision_date', default),
+        #     item.get('appeal_decision', default),
+        #     item.get('appeal_submitted', default),
+        #     item.get('documents_url', default),
+        #     item.get('planning_portal_reference', default),
+        #     item.get('application_registered', default),
+        #     item.get('application_validated', default),
+        #     item.get('appeal_lodged', default),
+        #     item.get('expected_decision_level', default),
+        #     item.get('case_officer_tel', default)))
         #     self.conn.commit()
         # except MySQLdb.Error, e:
         #     print "Error %d: %s" % (e.args[0], e.args[1])
         #     return item
 
 class Southwark(object):
-
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='192.168.1.207', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
+       self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         store_keys(item, self.__class__.__name__)
         # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', self.default)])
+        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('address', default)])
         #     address_response = self.cursor.fetchone()
         #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', self.default)])
+        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('address', default)])
         #         self.conn.commit()
         #         self.cursor.execute("SELECT LAST_INSERT_ID();")
         #         address_response = self.cursor.fetchone()
@@ -605,53 +490,51 @@ class Southwark(object):
         #                             %s, %s, %s, %s, %s, %s, %s, %s,
         #                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());""",
         #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('reference', self.default),
-        #     item.get('ward', self.default),
-        #     item.get('applicant_name', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('case_officer', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('appeal_status', self.default),
-        #     item.get('expected_decision_level', self.default),
-        #     item.get('agent_name', self.default),
-        #     item.get('agent_company_name', self.default),
-        #     item.get('environmental_assessment_requested', self.default),
-        #     item.get('closing_date_for_comments', self.default),
-        #     item.get('statutory_expiry_date', self.default),
-        #     item.get('agreed_expiry_date', self.default),
-        #     item.get('permission_expiry_date', self.default),
-        #     item.get('expiry_date', self.default)))
+        #     item.get('borough', default),
+        #     item.get('domain', default),
+        #     item.get('reference', default),
+        #     item.get('ward', default),
+        #     item.get('applicant_name', default),
+        #     item.get('application_type', default),
+        #     item.get('proposal', default),
+        #     item.get('status', default),
+        #     item.get('decision', default),
+        #     item.get('decision_date', default),
+        #     item.get('appeal_decision', default),
+        #     item.get('appeal_status', default),
+        #     item.get('documents_url', default),
+        #     item.get('planning_portal_reference', default),
+        #     item.get('case_officer', default),
+        #     item.get('application_registered', default),
+        #     item.get('application_validated', default),
+        #     item.get('appeal_status', default),
+        #     item.get('expected_decision_level', default),
+        #     item.get('agent_name', default),
+        #     item.get('agent_company_name', default),
+        #     item.get('environmental_assessment_requested', default),
+        #     item.get('closing_date_for_comments', default),
+        #     item.get('statutory_expiry_date', default),
+        #     item.get('agreed_expiry_date', default),
+        #     item.get('permission_expiry_date', default),
+        #     item.get('expiry_date', default)))
         #     self.conn.commit()
         # except MySQLdb.Error, e:
         #     print "Error %d: %s" % (e.args[0], e.args[1])
         #     return item
 
 class TowerHamlets(object):
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
+        self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         store_keys(item, self.__class__.__name__)
         # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('location', self.default)])
+        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('location', default)])
         #     address_response = self.cursor.fetchone()
         #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('location', self.default)])
+        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('location', default)])
         #         self.conn.commit()
         #         self.cursor.execute("SELECT LAST_INSERT_ID();")
         #         address_response = self.cursor.fetchone()
@@ -679,42 +562,40 @@ class TowerHamlets(object):
         #                             %s, %s, %s, %s, %s,
         #                             %s, %s, %s, %s, NOW());""",
         #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('application_no', self.default),
-        #     item.get('ward', self.default),
-        #     item.get('consultation_end_date', self.default),
-        #     item.get('applicant', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('development', self.default),
-        #     item.get('decision_type', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('case_officer', self.default),
-        #     item.get('agent', self.default)))
+        #     item.get('borough', default),
+        #     item.get('domain', default),
+        #     item.get('application_no', default),
+        #     item.get('ward', default),
+        #     item.get('consultation_end_date', default),
+        #     item.get('applicant', default),
+        #     item.get('application_type', default),
+        #     item.get('development', default),
+        #     item.get('decision_type', default),
+        #     item.get('decision_date', default),
+        #     item.get('documents_url', default),
+        #     item.get('planning_portal_reference', default),
+        #     item.get('application_registered', default),
+        #     item.get('application_validated', default),
+        #     item.get('case_officer', default),
+        #     item.get('agent', default)))
         #     self.conn.commit()
         # except MySQLdb.Error, e:
         #     print "Error %d: %s" % (e.args[0], e.args[1])
         #     return item
 
 class Islington(object):
+    """"""
     def __init__(self):
-        self.conn = MySQLdb.connect(user='scraper', passwd='12345678', db='research_uk', host='granweb01', charset="utf8", use_unicode=True)
-        self.cursor = self.conn.cursor()
-        self.default = 'n/a'
-        self.path = "/home/medi/workbench/boroughSpider/NAME_item_keys.pkl"
+        self.cur = con.cursor()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         store_keys(item, self.__class__.__name__)
         # try:
-        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', self.default)])
+        #     self.cursor.execute("""SELECT a.id FROM addresses a WHERE a.address = %s;""", [item.get('site_address', default)])
         #     address_response = self.cursor.fetchone()
         #     if address_response is None:
-        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('site_address', self.default)])
+        #         self.cursor.execute("""INSERT INTO addresses (address) VALUES (%s);""", [item.get('site_address', default)])
         #         self.conn.commit()
         #         self.cursor.execute("SELECT LAST_INSERT_ID();")
         #         address_response = self.cursor.fetchone()
@@ -746,26 +627,26 @@ class Islington(object):
         #                             %s, %s, %s, %s, %s, %s, %s, %s,
         #                             %s, %s, %s, %s, NOW());""",
         #     (address_id,
-        #     item.get('borough', self.default),
-        #     item.get('domain', self.default),
-        #     item.get('application_number', self.default),
-        #     item.get('wards', self.default),
-        #     item.get('applicant', self.default),
-        #     item.get('application_type', self.default),
-        #     item.get('proposal', self.default),
-        #     item.get('status', self.default),
-        #     item.get('decision', self.default),
-        #     item.get('decision_date', self.default),
-        #     item.get('appeal_submitted', self.default),
-        #     item.get('appeal_decision', self.default),
-        #     item.get('appeal_submitted', self.default),
-        #     item.get('documents_url', self.default),
-        #     item.get('planning_portal_reference', self.default),
-        #     item.get('application_registered', self.default),
-        #     item.get('application_validated', self.default),
-        #     item.get('appeal_lodged', self.default),
-        #     item.get('expected_decision_level', self.default),
-        #     item.get('case_officer_tel', self.default)))
+        #     item.get('borough', default),
+        #     item.get('domain', default),
+        #     item.get('application_number', default),
+        #     item.get('wards', default),
+        #     item.get('applicant', default),
+        #     item.get('application_type', default),
+        #     item.get('proposal', default),
+        #     item.get('status', default),
+        #     item.get('decision', default),
+        #     item.get('decision_date', default),
+        #     item.get('appeal_submitted', default),
+        #     item.get('appeal_decision', default),
+        #     item.get('appeal_submitted', default),
+        #     item.get('documents_url', default),
+        #     item.get('planning_portal_reference', default),
+        #     item.get('application_registered', default),
+        #     item.get('application_validated', default),
+        #     item.get('appeal_lodged', default),
+        #     item.get('expected_decision_level', default),
+        #     item.get('case_officer_tel', default)))
         #     self.conn.commit()
         # except MySQLdb.Error, e:
         #     print "Error %d: %s" % (e.args[0], e.args[1])
@@ -773,9 +654,8 @@ class Islington(object):
 
 class GenericPipeline(object):
     def __init__(self):
-      self.con = MySQLdb.connect(user='mehdi', passwd='pashmak.mN2', db='research_uk_public_data', host='granweb01', charset='utf8', use_unicode=True)
-      self.cur = self.con.cursor()
-      self.db_columns = []
+        self.cur = con.cursor()
+        self.db_columns = []
 
     def table_exists(self, table_name):
         """"""
@@ -795,8 +675,8 @@ class GenericPipeline(object):
         schema = create % {'table_name':name, 'columns':columns}
         try:
             self.cur.execute(schema)
-            self.con.commit()
-        except MySQLdb.Error as err:
+            con.commit()
+        except db_Error as err:
             print "Error %d: %s" % (err.args[0], err.args[1])
 
         return item.keys()
@@ -810,8 +690,8 @@ class GenericPipeline(object):
         alter_sql = "ALTER TABLE %(table)s %(columns)s AFTER %(column)s;" % {'table':name, 'columns':columns, 'column':self.db_columns[-1]}
         try:
             self.cur.execute(alter_sql)
-            self.con.commit()
-        except MySQLdb.Error as err:
+            con.commit()
+        except db_Error as err:
             print "Error %d: %s" % (err.args[0], err.args[1])
 
         return self.db_columns + diff_list
@@ -827,21 +707,14 @@ class GenericPipeline(object):
         insert_sql = "INSERT INTO %s (%s, birth) VALUES (%s,NOW());" % (name, col_names, wildcards)
         data = tuple([item.get(col, 'n/a') for col in cols])
         self.cur.execute(insert_sql, data)
-        self.con.commit()
+        con.commit()
 
     @check_spider_pipeline
     def process_item(self, item, spider):
         """"""
         spider_class = spider.__class__.__name__
         self.db_columns = item.keys()
-        try:
-            store_keys(item.keys(), spider_class)
-        except Exception as err:
-            print 'Error From process_item: ', err
-        else:
-            print 'Item keys has been exported to file'
-        # print "Item: ", item
-        ##
+
         if self.table_exists(spider_class) is False:
             self.db_columns = self.create_table(item, spider_class)
         item_keys = item.keys()
@@ -851,4 +724,4 @@ class GenericPipeline(object):
         try:
             self.insert(item, spider_class)
         except Exception as err:
-            print "ERROR Froom process_item: ", err
+            print "ERROR From process_item: ", err

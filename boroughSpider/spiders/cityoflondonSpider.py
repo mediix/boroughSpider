@@ -10,7 +10,7 @@ from dateutil import parser
 class cityOfLondonSpider(Spider):
   name = 'londSpider'
   pipeline = ['GenericPipeline']
-  domain = 'cityoflondon.gov.uk'
+  domain = 'http://www.cityoflondon.gov.uk'
   base_url = ["dummy", "http://www.planning2.cityoflondon.gov.uk"]
   start_urls = ["http://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=monthlyList"]
 
@@ -132,7 +132,6 @@ class cityOfLondonSpider(Spider):
       except Exception as err:
         table.update({'documents_url': 'n/a'})
 
-      item = table
       return item
 
   def parse_important_dates(self, response):
@@ -172,6 +171,5 @@ class cityOfLondonSpider(Spider):
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       table.update({'documents_url': documents_url})
 
-    item = table
     return table
 
