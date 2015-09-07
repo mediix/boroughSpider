@@ -10,16 +10,24 @@ db_Error = MySQLdb.Error
 #                  charset='utf8',
 #                  use_unicode=True)
 
-con = MySQLdb.connect(user='mehdi',
-                  passwd='pashmak.mN2',
-                  db='research_uk_public_data',
-                  host='granweb01',
+# con = MySQLdb.connect(user='mehdi',
+#                   passwd='pashmak.mN2',
+#                   db='research_uk_public_data',
+#                   host='granweb01',
+#                   charset='utf8',
+#                   use_unicode=True)
+
+con = MySQLdb.connect(user='root',
+                  passwd='pashmak.',
+                  db='research_uk',
+                  host='rappi.local',
                   charset='utf8',
                   use_unicode=True)
+cur = con.cursor()
 
 def check_address(address):
   """"""
-  sql = "SELECT id FROM addresses WHERE address = 'ADDRESS';".replace('ADDRESS', address)
+  sql = """SELECT id FROM addresses WHERE address = "%s";""" % (address,)
   try:
     cur.execute(sql)
     db_response = cur.fetchone()

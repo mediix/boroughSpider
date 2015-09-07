@@ -1,4 +1,4 @@
-from scrapy.spider import Spider
+from scrapy.spiders import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
 # from scrapy.item import DictItem, Field

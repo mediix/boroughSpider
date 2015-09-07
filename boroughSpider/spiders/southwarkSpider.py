@@ -1,4 +1,4 @@
-from scrapy.spider import Spider
+from scrapy.spiders import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
 from scrapy.item import DictItem, Field
@@ -14,16 +14,16 @@ import time
 class SouthwarkSpider(Spider):
   name = 'soutSpider'
   domain = 'http://planbuild.southwark.gov.uk'
-  pipeline = ['GenericPipeline']
+  pipeline = ['Southwark']
   base_url = ["dummy", "http://planbuild.southwark.gov.uk:8190"]
   start_urls = ["http://planbuild.southwark.gov.uk:8190/online-applications/search.do?action=monthlyList"]
 
   custom_settings = {
-      'DOWNLOAD_DELAY': 0.5,
+      # 'DOWNLOAD_DELAY': 0.25,
       'RETRY_ENABLED': True,
       'CONCURRENT_REQUESTS': 1,
       'CONCURRNT_REQUESTS_PER_IP': 1,
-      'RANDOM_DOWNLOAD_DELY': False,
+      'RANDOM_DOWNLOAD_DELY': True,
       'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
   }
@@ -93,7 +93,7 @@ class SouthwarkSpider(Spider):
       pass
 
   def parse_further_info(self, response):
-    inspect_response(response, self)
+    # inspect_response(response, self)
     table = response.meta['table']
 
     strat = (parse_html,)

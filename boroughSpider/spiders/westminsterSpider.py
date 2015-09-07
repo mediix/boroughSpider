@@ -7,11 +7,10 @@ from libextract import extract, prototypes
 from libextract.tabular import parse_html
 from dateutil import parser
 
-from datetime import date, datetime, timedelta
 
 class westminsterSpider(Spider):
   name = 'westSpider'
-  pipeline = ['GenericPipeline']
+  pipeline = ['Westminster']
   domain = 'http://idoxpa.westminster.gov.uk'
   base_url = ["dummy", "http://idoxpa.westminster.gov.uk"]
   start_urls = ["http://idoxpa.westminster.gov.uk/online-applications/search.do?action=monthlyList"]
@@ -35,7 +34,7 @@ class westminsterSpider(Spider):
     for parish in parishes:
       yield FormRequest.from_response(response,
                           formname = 'searchCriteriaForm',
-                          formdata = { 'searchCriteria.parish':parish.encode('utf-8'),
+                          formdata = { 'searchCriteria.parish':'WS',
                                        'month':self.month,
                                        'dateType':'DC_Validated',
                                        'searchType':'Application' },

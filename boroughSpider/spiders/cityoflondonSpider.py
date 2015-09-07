@@ -7,13 +7,12 @@ from libextract.tabular import parse_html
 from datetime import date, datetime, timedelta
 from dateutil import parser
 
-class cityOfLondonSpider(Spider):
+class CityOfLondonSpider(Spider):
   name = 'londSpider'
-  pipeline = ['GenericPipeline']
+  pipeline = ['CityOfLondon']
   domain = 'http://www.cityoflondon.gov.uk'
   base_url = ["dummy", "http://www.planning2.cityoflondon.gov.uk"]
   start_urls = ["http://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=monthlyList"]
-
   custom_settings = {
       'DOWNLOAD_DELAY': 0.5,
       'RETRY_ENABLED': True,
@@ -28,7 +27,6 @@ class cityOfLondonSpider(Spider):
     self.month = month
 
   def parse(self, response):
-    print "Post Request Month:", self.month
     return [FormRequest.from_response(response,
                         formname = 'searchCriteriaForm',
                         formdata = { 'searchCriteria.caseStatus':'',
@@ -80,8 +78,8 @@ class cityOfLondonSpider(Spider):
     tab = extract(response.body, strategy=strat)
     try:
       table = list(prototypes.convert_table(tab.xpath("//table")))[0]
-    except IndexError as err:
-      pass
+    except Exception:
+      raise IndexError('Table Not Found!')
 
     if response.xpath("//*[@id='subtab_details']/@href").extract():
       url = response.xpath("//*[@id='subtab_details']/@href").extract()[0]
@@ -98,8 +96,8 @@ class cityOfLondonSpider(Spider):
     tab = extract(response.body, strategy=strat)
     try:
       table_1 = list(prototypes.convert_table(tab.xpath("//table")))[0]
-    except IndexError as err:
-      pass
+    except Exception:
+      raise IndexError('Table Not Found!')
     else:
       table.update(table_1)
 
@@ -129,7 +127,7 @@ class cityOfLondonSpider(Spider):
         documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
         documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
         table.update({'documents_url': documents_url})
-      except Exception as err:
+      except Exception:
         table.update({'documents_url': 'n/a'})
 
       return item
@@ -142,8 +140,8 @@ class cityOfLondonSpider(Spider):
     tab = extract(response.body, strategy=strat)
     try:
       table_1 = list(prototypes.convert_table(tab.xpath("//table")))[0]
-    except IndexError as err:
-      pass
+    except Exception:
+      raise IndexError('Table Not Found!')
     else:
       table.update(table_1)
 
@@ -165,7 +163,7 @@ class cityOfLondonSpider(Spider):
 
     try:
       documents_url = response.xpath("//*[@id='tab_documents']/@href").extract()[0]
-    except Exception as err:
+    except Exception:
       table.update({'documents_url': 'n/a'})
     else:
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)

@@ -8,7 +8,7 @@ from libextract.tabular import parse_html
 from dateutil import parser
 #
 from datetime import date, datetime, timedelta
-import time, json
+import json
 
 class HammersmithSpider(Spider):
   name = 'hammSpider'
@@ -185,8 +185,7 @@ class HammersmithSpider(Spider):
         documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
         table.update({'documents_url': documents_url})
 
-      item = table
-      return item
+      return table
 
   def parse_constraints(self, response):
     # inspect_response(response)
@@ -226,5 +225,4 @@ class HammersmithSpider(Spider):
       documents_url = '{0}{1}'.format(self.base_url[1], documents_url)
       table.update({'documents_url': documents_url})
 
-    item = table
-    return item
+    return table

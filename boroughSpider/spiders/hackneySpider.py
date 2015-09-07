@@ -1,4 +1,4 @@
-from scrapy.spider import Spider
+from scrapy.spiders import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
 from scrapy.item import DictItem, Field
@@ -10,9 +10,19 @@ from dateutil import parser
 class HackneySpider(Spider):
   name = 'hackSpider'
   domain = 'http://www.hackney.gov.uk'
-  pipeline = ['GenericPipeline']
+  pipeline = ['Hackney']
   base_url = ["http://planning.hackney.gov.uk/Northgate/PlanningExplorer/Generic/"]
   start_urls = ["http://planning.hackney.gov.uk/Northgate/PlanningExplorer/generalsearch.aspx"]
+
+  custom_settings = {
+      # 'DOWNLOAD_DELAY': 0.25,
+      'RETRY_ENABLED': True,
+      'CONCURRENT_REQUESTS': 1,
+      'CONCURRNT_REQUESTS_PER_IP': 1,
+      'RANDOM_DOWNLOAD_DELY': True,
+      'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
+      'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+  }
 
   def parse(self, response):
     return [FormRequest.from_response(response,

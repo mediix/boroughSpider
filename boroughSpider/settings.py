@@ -22,17 +22,10 @@ ITEM_PIPELINES = {
     'boroughSpider.pipelines.Wandsworth',
     'boroughSpider.pipelines.Southwark',
     'boroughSpider.pipelines.TowerHamlets',
-    'boroughSpider.pipelines.Islington',
+    'boroughSpider.pipelines.Hackney',
+    'boroughSpider.pipelines.Lambeth',
     'boroughSpider.pipelines.GenericPipeline'
 }
-
-# DOWNLOAD_DELAY = 1.25
-# COOKIES_ENABLED = False
-# CONCURRENT_REQUESTS=1
-# CONCURRNT_REQUESTS_PER_IP=1
-# RANDOM_DOWNLOAD_DELY=False
-# CONCURRENT_REQUESTS_PER_DOMAIN = 2
-# COOKIES_DEBUG = True
 
 # DOWNLOADER_MIDDLEWARES = {
 #     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
