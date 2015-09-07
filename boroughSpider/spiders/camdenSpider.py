@@ -9,7 +9,7 @@ from dateutil import parser
 
 class CamdenSpider(Spider):
   name = 'camdSpider'
-  domain = 'http://www.camden.gov.uk/'
+  domain = 'http://www.camden.gov.uk'
   pipeline = ['Hackney']
   base_url = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/Generic/"]
   start_urls = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/GeneralSearch.aspx"]
@@ -82,7 +82,7 @@ class CamdenSpider(Spider):
     chk = lambda key: key.replace(' ', '_').replace('_/_', '_').replace('?', '')
     table = { chk(key).lower(): (value[0] if value else '') for key, value in table.items() }
 
-    table.update({'borough': 'Wandsworth'})
+    table.update({'borough': 'Camden'})
     table.update({'domain': self.domain})
     try:
       documents_url = response.xpath("//*[@id='content']//a[@title='Link to View Related Documents']/@href").extract()[0]

@@ -28,14 +28,14 @@ scrapyd = ScrapydAPI('http://localhost:6800')
 
 # [scrapyd.delete_version(p, ver) for ver in scrapyd.list_versions(p)]
 
-# for elem in scrapyd.list_jobs(p)['running']:
-#   print elem
-#   scrapyd.cancel(p, elem.get('id'))
+for elem in scrapyd.list_jobs(p)['running']:
+  print elem
+  scrapyd.cancel(p, elem.get('id'))
 
-spiders = [spider.encode('utf-8') for spider in scrapyd.list_spiders(p)]
+# spiders = [spider.encode('utf-8') for spider in scrapyd.list_spiders(p)]
 
-for month in months[::-1]:
-  for sp in spiders:
-    if sp == 'lambSpider':
-      data = {'project':p, 'spider':sp, 'month':month}
-      post('http://localhost:6800/schedule.json', data=data)
+# for month in months[::-1]:
+#   for sp in spiders:
+#     if sp == 'lambSpider':
+#       data = {'project':p, 'spider':sp, 'month':month}
+#       post('http://localhost:6800/schedule.json', data=data)
