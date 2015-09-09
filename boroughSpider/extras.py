@@ -10,19 +10,19 @@ db_Error = MySQLdb.Error
 #                  charset='utf8',
 #                  use_unicode=True)
 
-# con = MySQLdb.connect(user='mehdi',
-#                   passwd='pashmak.mN2',
-#                   db='research_uk_public_data',
-#                   host='granweb01',
-#                   charset='utf8',
-#                   use_unicode=True)
+con = MySQLdb.connect(user='mehdi',
+                   passwd='pashmak.mN2',
+                   db='research_uk_public_data',
+                   host='granweb01',
+                   charset='utf8',
+                   use_unicode=True)
 
-con = MySQLdb.connect(user='root',
-                  passwd='pashmak.',
-                  db='research_uk',
-                  host='rappi.local',
-                  charset='utf8',
-                  use_unicode=True)
+#con = MySQLdb.connect(user='root',
+#                  passwd='pashmak.',
+#                  db='research_uk',
+#                  host='rappi.local',
+#                  charset='utf8',
+#                  use_unicode=True)
 cur = con.cursor()
 
 def check_address(address):
