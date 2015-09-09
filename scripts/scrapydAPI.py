@@ -1,5 +1,5 @@
 from requests import post
-from dateutil import parser
+# from dateutil import parser
 from datetime import date, datetime, timedelta
 from scrapyd_api import ScrapydAPI
 
@@ -24,12 +24,7 @@ scrapyd = ScrapydAPI('http://rappi.local:6800')
   # print elem
   # scrapyd.cancel(p, elem.get('id'))
 
-# spiders = [spider.encode('utf-8') for spider in scrapyd.list_spiders(p)]
-
-# for sp in spiders:
-#   if sp in ['camdSpider', 'hackSpider', 'isliSpider', 'kensSpider', 'towerSpider', 'wandSpider']:
-#     data = {'project':p, 'spider':sp}
-#     post('http://rappi.local:6800/schedule.json', data=data)
+spiders = [spider.encode('utf-8') for spider in scrapyd.list_spiders(p)]
 
 for month in months[::-1]:
   for sp in spiders:
