@@ -33,7 +33,7 @@ scrapyd = ScrapydAPI('http://rappi.local:6800')
 
 for month in months[::-1]:
   for sp in spiders:
-    if sp == ['hammSpider', 'londSpider', 'westSpider', 'soutSpider', 'lambSpider']:
+    if sp in ['hammSpider', 'londSpider', 'westSpider', 'soutSpider', 'lambSpider']:
       data = {'project':p, 'spider':sp, 'month':month}
       post('http://rappi.local:6800/schedule.json', data=data)
     else:
