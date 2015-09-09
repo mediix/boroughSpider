@@ -15,11 +15,11 @@ class CamdenSpider(Spider):
   start_urls = ["http://planningrecords.camden.gov.uk/Northgate/PlanningExplorer17/GeneralSearch.aspx"]
 
   custom_settings = {
-      # 'DOWNLOAD_DELAY': 0.25,
+      'DOWNLOAD_DELAY': 0.25,
       'RETRY_ENABLED': True,
       'CONCURRENT_REQUESTS': 1,
       'CONCURRNT_REQUESTS_PER_IP': 1,
-      'RANDOM_DOWNLOAD_DELY': True,
+      'RANDOM_DOWNLOAD_DELY': False,
       'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
   }
