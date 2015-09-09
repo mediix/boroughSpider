@@ -14,11 +14,11 @@ class IslingtonSpider(Spider):
   start_urls = ["http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
 
   custom_settings = {
-      # 'DOWNLOAD_DELAY': 0.25,
+      'DOWNLOAD_DELAY': 0.25,
       'RETRY_ENABLED': True,
       'CONCURRENT_REQUESTS': 1,
       'CONCURRNT_REQUESTS_PER_IP': 1,
-      'RANDOM_DOWNLOAD_DELY': True,
+      'RANDOM_DOWNLOAD_DELY': False,
       'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
   }
@@ -85,7 +85,7 @@ class IslingtonSpider(Spider):
     table.update({'domain': self.domain})
     try:
       documents_url = response.xpath("//*[@id='Template']//a[@title='Link to related documents']/@href").extract()[0]
-      table.update({'documents_url': documents_url.encode('utf-8')})
+      table.update({'documents_url': documents_url.encode('utf-8').translate(None, delete)})
     except:
       table.update({'documents_url': 'n/a'})
 

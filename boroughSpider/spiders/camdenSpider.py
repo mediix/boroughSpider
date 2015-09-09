@@ -86,9 +86,10 @@ class CamdenSpider(Spider):
     table.update({'domain': self.domain})
     try:
       documents_url = response.xpath("//*[@id='content']//a[@title='Link to View Related Documents']/@href").extract()[0]
-      table.update({'documents_url': documents_url.encode('utf-8')})
     except:
       table.update({'documents_url': 'n/a'})
+    else:
+      table.update({'documents_url': documents_url.encode('utf-8').translate(None, delete)})
 
     if response.xpath("//*[@id='listing-content-rhs']//a[@title='Link to the application Dates page.']/@href").extract():
       date_url = response.xpath("//*[@id='listing-content-rhs']//a[@title='Link to the application Dates page.']/@href").extract()[0]

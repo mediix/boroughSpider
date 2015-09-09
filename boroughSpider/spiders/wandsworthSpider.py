@@ -10,16 +10,16 @@ from dateutil import parser
 class wandsworthSpider(Spider):
   name = 'wandSpider'
   domain = 'http://ww3.wandsworth.gov.uk'
-  pipeline = ['GenericPipeline']
+  pipeline = ['Wandsworth']
   base_url = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
   start_urls = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
 
   custom_settings = {
-      # 'DOWNLOAD_DELAY': 0.25,
+      'DOWNLOAD_DELAY': 0.25,
       'RETRY_ENABLED': True,
       'CONCURRENT_REQUESTS': 1,
       'CONCURRNT_REQUESTS_PER_IP': 1,
-      'RANDOM_DOWNLOAD_DELY': True,
+      'RANDOM_DOWNLOAD_DELY': False,
       'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
   }
