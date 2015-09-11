@@ -10,7 +10,8 @@ class IslingtonSpider(Spider):
   name = 'isliSpider'
   domain = 'http://www.islington.gov.uk'
   pipeline = ['Hackney']
-  base_url = ["http://planning.islington.gov.uk/Northgate/PlanningExplorer/Generic/"]
+  base_url = ["http://planning.islington.gov.uk/Northgate/PlanningExplorer/Generic/",
+              "http://planning.islington.gov.uk"]
   start_urls = ["http://planning.islington.gov.uk/northgate/planningexplorer/generalsearch.aspx"]
 
   custom_settings = {
@@ -85,7 +86,7 @@ class IslingtonSpider(Spider):
     table.update({'domain': self.domain})
     try:
       documents_url = response.xpath("//*[@id='Template']//a[@title='Link to related documents']/@href").extract()[0]
-      table.update({'documents_url': documents_url.encode('utf-8').translate(None, delete)})
+      table.update({'documents_url': self.base_url[1]+documents_url.encode('utf-8').translate(None, delete)})
     except:
       table.update({'documents_url': 'n/a'})
 

@@ -19,49 +19,54 @@ def address_geocoder(API_key=None):
   table: target table
   returns: updated lat, lon columns within the database
 
-  #GOOGLE's Credential for scraper:
+  Google account for scraper:
     user: scraper.gvhomes@gmail.com
     pass: scraper12345678
   """
-  conn = MySQLdb.connect(user='scraper',
+  con = MySQLdb.connect(user='scraper',
                         passwd='12345678',
                         db='research_uk',
                         host='granweb01',
-                        charset="utf8",
+                        charset='utf8',
                         use_unicode=True)
-  cursor = conn.cursor()
-  cursor.execute("""SELECT id, address
-                    FROM addresses
-                    WHERE is_geocoded = 0
-                      AND (lat IS NULL OR lon IS NULL)
-                    LIMIT 2500;""")
-  addrs = cursor.fetchall()
+  cur = con.cursor()
+  cur.execute("""SELECT id, address
+                 FROM addresses
+                 WHERE is_geocoded = 0
+                    AND (lat IS NULL OR lon IS NULL)
+                 LIMIT 2500;""")
+  addrs = cur.fetchall()
   addrs = { t[0]: t[1:] for t in addrs }
   addrs = { key: (value[0].encode('utf-8') if value else None) for key, value in addrs.items() }
 
   geo = GoogleV3(API_key)
 
   for key, value in addrs.items():
+    sleep(2)
     try:
       response = geo.geocode(value, exactly_one=True)
       if response is not None:
         addr, (lat, lon) = response
         # print "Address: {0}, Latitude: {1}, Longitutde: {2}".format(addr, lat, lon)
-        cursor.execute("""UPDATE addresses
+        cur.execute("""UPDATE addresses
                           SET lat = %s, lon = %s, address_adjusted = %s, is_geocoded = 1
                           WHERE id = %s""",
                           [lat, lon, addr, key])
-        conn.commit()
+        con.commit()
         sys.stdout.write('.')
         sys.stdout.flush()
-    except (MySQLdb.Error, MySQLdb.OperationalError) as e:
-      print "ERROR %d: %s" % (e.args[0], e.args[1])
-      conn.rollback()
-    except:
-      print "ERROR: %s" % (sys.exc_info()[0])
+    except (MySQLdb.Error, MySQLdb.OperationalError) as err:
+      print "MySQLdb Error %d: %s" % (err.args[0], err.args[1])
+      con.rollback()
+    except Exception as err:
+      print "General Error: ", err
 
-  conn.close()
 
 if __name__ == '__main__':
-  for key in API_keys:
-    address_geocoder(key)
+  for key in API_keys[::-1]:
+    try:
+      address_geocoder(key)
+    except Exception:
+      break
+    finally:
+      con.close()

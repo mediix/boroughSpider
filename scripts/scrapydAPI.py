@@ -26,16 +26,17 @@ scrapyd = ScrapydAPI('http://localhost:6800')
 
 spiders = [spider.encode('utf-8') for spider in scrapyd.list_spiders(p)]
 
-# for sp in spiders:
-#   if sp in ['kensSpider', 'camdSpider', 'hackSpider', 'isliSpider', 'towerSpider', 'wandSpider']:
-#     data = {'project':p, 'spider':sp}
-#     post('http://localhost:6800/schedule.json', data=data)
+for sp in spiders:
+  # if sp in ['kensSpider', 'camdSpider', 'hackSpider', 'isliSpider', 'towerSpider', 'wandSpider']:
+  if sp == 'kensSpider':
+    data = {'project':p, 'spider':sp}
+    post('http://localhost:6800/schedule.json', data=data)
 
 
-for month in months[::-1]:
-  for sp in spiders:
-    # if sp in ['hammSpider', 'londSpider', 'westSpider', 'soutSpider', 'lambSpider']:
-    if sp == 'londSpider':
-      data = {'project':p, 'spider':sp, 'month':month}
-      post('http://localhost:6800/schedule.json', data=data)
+# for month in months[::-1]:
+#   for sp in spiders:
+#     if sp in ['hammSpider', 'londSpider', 'westSpider', 'soutSpider', 'lambSpider']:
+#     # if sp == 'londSpider':
+#       data = {'project':p, 'spider':sp, 'month':month}
+#       post('http://localhost:6800/schedule.json', data=data)
 

@@ -1,7 +1,6 @@
 from scrapy.spiders import Spider
 from scrapy.shell import inspect_response
 from scrapy.http import Request, FormRequest
-from scrapy.item import DictItem, Field
 
 from libextract import extract, prototypes
 from libextract.tabular import parse_html
@@ -10,7 +9,7 @@ from dateutil import parser
 class wandsworthSpider(Spider):
   name = 'wandSpider'
   domain = 'http://ww3.wandsworth.gov.uk'
-  pipeline = ['Wandsworth']
+  pipeline = ['Hackney']
   base_url = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/"]
   start_urls = ["http://planning1.wandsworth.gov.uk/Northgate/PlanningExplorer/GeneralSearch.aspx"]
 

@@ -1,21 +1,21 @@
 import MySQLdb
 
 default = ''
-
 db_Error = MySQLdb.Error
-# con = MySQLdb.connect(user='scraper',
-#                  passwd='12345678',
-#                  db='research_uk',
-#                  host='granweb01',
-#                  charset='utf8',
-#                  use_unicode=True)
 
-con = MySQLdb.connect(user='mehdi',
-                   passwd='pashmak.mN2',
-                   db='research_uk_public_data',
-                   host='granweb01',
-                   charset='utf8',
-                   use_unicode=True)
+con = MySQLdb.connect(user='scraper',
+                      passwd='12345678',
+                      db='research_uk_public_data',
+                      host='granweb01',
+                      charset='utf8',
+                      use_unicode=True)
+
+# con = MySQLdb.connect(user='mehdi',
+#                    passwd='pashmak.mN2',
+#                    db='research_uk_public_data',
+#                    host='granweb01',
+#                    charset='utf8',
+#                    use_unicode=True)
 
 #con = MySQLdb.connect(user='root',
 #                  passwd='pashmak.',
@@ -23,16 +23,17 @@ con = MySQLdb.connect(user='mehdi',
 #                  host='rappi.local',
 #                  charset='utf8',
 #                  use_unicode=True)
+
 cur = con.cursor()
 
 def check_address(address):
   """"""
-  sql = """SELECT id FROM addresses WHERE address = "%s";""" % (address,)
+  sql = """SELECT id FROM research_uk.addresses WHERE address = "%s";""" % (address,)
   try:
     cur.execute(sql)
     db_response = cur.fetchone()
     if db_response is None:
-      cur.execute("INSERT INTO addresses (address) VALUES (%s);", [address])
+      cur.execute("INSERT INTO research_uk.addresses (address) VALUES (%s);", [address])
       con.commit()
       cur.execute("SELECT LAST_INSERT_ID();")
       db_response = cur.fetchone()
